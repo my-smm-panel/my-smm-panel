@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGPRO - MASTER SECURE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 🎨 ADVANCED CSS SECTION */
+        :root { --primary: #3b82f6; --bg: #050810; }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; }
+        .glass-panel { 
+            background: rgba(22, 29, 47, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 28px;
+        }
+        .neo-input { 
+            background: #0a0f1d; 
+            border: 1px solid #1e293b; 
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .btn-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: 0.4s; }
+        .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="p-5">
+
+    <div id="authBox" class="fixed inset-0 bg-black z-[9999] flex items-center justify-center">
+        <div class="glass-panel p-10 w-full max-w-sm text-center border-t-4 border-blue-500">
+            <h2 class="text-4xl font-black italic mb-8">DG<span class="text-blue-500">PRO</span></h2>
+            <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-2xl font-black flex items-center justify-center gap-3">
+                <img src="https://www.google.com/favicon.ico" class="w-5"> Login with Google
+            </button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-lg mx-auto">
+        <nav class="flex justify-between items-center mb-10 glass-panel p-6">
+            <h1 class="text-2xl font-black italic">DG<span class="text-blue-500">PRO</span></h1>
+            <div class="text-right">
+                <p id="uBal" class="text-2xl font-black text-green-400 font-mono">₹0.00</p>
+                <button onclick="logout()" class="text-[10px] text-red-500 font-black uppercase tracking-tighter">Sign Out</button>
+            </div>
+        </nav>
+
+        <div class="glass-panel p-8 mb-8">
+            <h3 class="text-xs font-bold text-blue-400 mb-6 uppercase tracking-widest">🛒 New Secure Order</h3>
+            <div class="space-y-5">
+                <select id="catSel" onchange="loadSvcs()" class="w-full p-4 rounded-2xl neo-input text-xs font-bold"></select>
+                <select id="svcSel" onchange="calcPrice()" class="w-full p-4 rounded-2xl neo-input text-xs font-bold"></select>
+                <input id="orderLink" type="text" placeholder="Paste Link Here" class="w-full p-4 rounded-2xl neo-input text-xs font-bold">
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="orderQty" oninput="calcPrice()" type="number" placeholder="Quantity" class="p-4 rounded-2xl neo-input text-xs font-bold">
+                    <div class="glass-panel bg-blue-500/5 flex flex-col justify-center items-center rounded-2xl">
+                        <span id="totalPrice" class="font-black text-blue-400 text-lg">₹0.00</span>
+                    </div>
+                </div>
+                <button onclick="placeOrder()" class="w-full bg-blue-600 py-5 rounded-2xl font-black btn-glow uppercase text-sm">Place Secure Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, increment, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM", //
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+        
+        const MASTER_MAIL = "stanix579@gmail.com"; //
+        const BACKEND = "https://dg-backend-jhqa.onrender.com"; //
+
+        let uRef, myBal = 0, allSvcs = [], profit = 25;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('authBox').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                // 🛡️ REALTIME SECURITY
+                uRef = ref(db, 'users/' + user.uid);
+                onValue(uRef, (s) => {
+                    const d = s.val();
+                    if(d) { myBal = d.balance || 0; document.getElementById('uBal').innerText = "₹" + myBal.toFixed(2); }
+                    else { set(uRef, { balance: 0, email: user.email }); }
+                });
+
+                fetch(`${BACKEND}/services`).then(r => r.json()).then(d => {
+                    allSvcs = d;
+                    const cats = [...new Set(allSvcs.map(s => s.category))];
+                    document.getElementById('catSel').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                });
+            }
+        });
+
+        window.handleGoogle = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth).then(() => location.reload());
+
+        window.placeOrder = async () => {
+            const total = parseFloat(document.getElementById('totalPrice').innerText.replace('₹',''));
+            if(myBal < total) return alert("Security: Insufficient Balance!");
+
+            // 🛡️ TOKENIZED REQUEST
+            try {
+                const res = await fetch(`${BACKEND}/place-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service: document.getElementById('svcSel').value,
+                        link: document.getElementById('orderLink').value,
+                        quantity: document.getElementById('orderQty').value,
+                        token: "DGPRO_ULTRA_SECURE_X99" 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    await update(uRef, { balance: increment(-total) });
+                    alert("Order Verified & Placed!");
+                }
+            } catch(e) { alert("Security Block: Connection Failed"); }
+        };
+
+        window.loadSvcs = () => {
+            const c = document.getElementById('catSel').value;
+            const filtered = allSvcs.filter(s => s.category === c);
+            document.getElementById('svcSel').innerHTML = filtered.map(s => `<option value="${s.service}">${s.name} - ₹${(s.rate * 1.25 / 1000).toFixed(4)}</option>`).join('');
+        };
+
+        window.calcPrice = () => {
+            // Price Calculation Logic
+            document.getElementById('totalPrice').innerText = "₹" + ((1.25 / 1000) * (parseInt(document.getElementById('orderQty').value) || 0)).toFixed(2);
+        };
+    </script>
+</body>
+</html>
