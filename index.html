@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGPRO - MASTER SECURE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #050810; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(22, 29, 47, 0.85); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+        .neo-input { background: #0a0f1d; border: 1px solid #1e293b; color: white; border-radius: 14px; transition: 0.3s; }
+        .neo-input:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); outline: none; }
+        .btn-gradient { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: 0.4s; }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="authBox" class="fixed inset-0 bg-[#050810] z-[9999] flex items-center justify-center">
+        <div class="glass p-10 text-center w-full max-w-sm">
+            <h2 class="text-4xl font-black mb-8 italic text-blue-500 tracking-tighter">DG<span class="text-white">PRO</span></h2>
+            <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-3">
+                <img src="https://www.google.com/favicon.ico" class="w-5"> Continue with Google
+            </button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-md mx-auto space-y-6">
+        
+        <div class="glass p-6 flex justify-between items-center border-b-2 border-blue-500/30">
+            <div>
+                <h1 class="text-2xl font-black italic text-blue-500">DGPRO</h1>
+                <div class="flex flex-col gap-2 mt-2">
+                    <button onclick="document.getElementById('addMoneyModal').classList.remove('hidden')" class="bg-blue-600/20 text-blue-400 text-[11px] font-black px-4 py-1.5 rounded-full border border-blue-500/30 uppercase tracking-wider">
+                        <i class="fas fa-plus-circle mr-1"></i> Add Balance
+                    </button>
+                    <a href="https://wa.me/917775965170?text=HELLO%20DG%20Sir%0AMujhe%20DG%20gift%20card%20buy%20karna%20hai" target="_blank" class="bg-green-600/20 text-green-400 text-[11px] font-black px-4 py-1.5 rounded-full border border-green-500/30 uppercase tracking-wider text-center">
+                        <i class="fab fa-whatsapp mr-1"></i> Buy DG Gift Card
+                    </a>
+                </div>
+            </div>
+            <div class="text-right">
+                <p id="uBal" class="text-3xl font-black text-green-400 font-mono">₹0.00</p>
+                <button onclick="logout()" class="text-[10px] text-red-500 font-black uppercase tracking-widest mt-1">Sign Out</button>
+            </div>
+        </div>
+
+        <div class="glass p-6 space-y-4">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-shopping-basket text-blue-500"></i> New Order
+            </h2>
+            <select id="svcSel" class="w-full p-4 neo-input text-xs font-bold"></select>
+            <input id="orderLink" type="text" placeholder="Service URL / Post Link" class="w-full p-4 neo-input text-xs font-bold">
+            <input id="orderQty" type="number" placeholder="Quantity (e.g. 1000)" class="w-full p-4 neo-input text-xs font-bold">
+            <button onclick="placeOrder()" class="w-full btn-gradient py-4 rounded-2xl font-black uppercase text-sm tracking-widest">Confirm Order</button>
+        </div>
+
+        <div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6">
+            <div class="glass p-8 w-full max-w-sm space-y-5 text-center">
+                <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-gift text-4xl text-blue-500"></i>
+                </div>
+                <h2 class="text-2xl font-black">REDEEM <span class="text-blue-500">CARD</span></h2>
+                <input id="redeemCode" type="text" placeholder="ENTER DG CODE" class="w-full p-5 neo-input text-center font-black text-xl uppercase text-blue-400">
+                <button onclick="redeemGift()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Add to Wallet</button>
+                <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">Cancel</button>
+            </div>
+        </div>
+
+        <div id="adminPanel" class="hidden glass border-2 border-red-500/20 p-6 space-y-4 shadow-lg shadow-red-900/10">
+            <h2 class="text-red-500 font-black text-center text-xs uppercase tracking-[0.3em]">Admin Control Center</h2>
+            <div class="bg-black/40 p-5 rounded-2xl space-y-3">
+                <p class="text-[10px] font-black text-slate-500 uppercase">Generate New Card</p>
+                <input id="giftCode" type="text" placeholder="GIFT-500" class="w-full p-3 neo-input text-xs font-bold uppercase">
+                <input id="giftVal" type="number" placeholder="Amount (INR)" class="w-full p-3 neo-input text-xs font-bold">
+                <button onclick="adminGenGift()" class="w-full bg-red-600/80 hover:bg-red-600 py-3 rounded-xl font-black text-xs uppercase transition">Sync to Database</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, increment, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+        const BACKEND = "https://dg-backend-jhqa.onrender.com";
+
+        let uRef, myBal = 0, userUID = "";
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUID = user.uid;
+                document.getElementById('authBox').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                // Admin Identification
+                if(user.email === "stanix579@gmail.com") {
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                }
+
+                uRef = ref(db, 'users/' + user.uid);
+                onValue(uRef, (s) => {
+                    myBal = s.val() ? s.val().balance : 0;
+                    document.getElementById('uBal').innerText = "₹" + myBal.toFixed(2);
+                    if(!s.val()) set(uRef, { balance: 0, email: user.email });
+                });
+
+                fetch(`${BACKEND}/services`).then(r => r.json()).then(data => {
+                    document.getElementById('svcSel').innerHTML = data.map(s => `<option value="${s.service}">${s.name} - ₹${(s.rate*1.25).toFixed(2)}</option>`).join('');
+                });
+            }
+        });
+
+        window.redeemGift = async () => {
+            const code = document.getElementById('redeemCode').value.toUpperCase().trim();
+            if(!code) return alert("Code input cannot be empty!");
+
+            const giftRef = ref(db, `gifts/${code}`);
+            const snapshot = await get(giftRef);
+
+            if (snapshot.exists() && snapshot.val().active === true) {
+                const amount = snapshot.val().amount;
+                // Atomic transaction to prevent double spending
+                await update(uRef, { balance: increment(amount) });
+                await update(giftRef, { active: false, redeemedBy: userUID, redeemedAt: new Date().toISOString() });
+                alert(`Success! ₹${amount} has been added to your wallet.`);
+                document.getElementById('addMoneyModal').classList.add('hidden');
+                document.getElementById('redeemCode').value = "";
+            } else {
+                alert("Security Error: Invalid or Expired Code!");
+            }
+        };
+
+        window.adminGenGift = async () => {
+            const code = document.getElementById('giftCode').value.toUpperCase().trim();
+            const val = parseFloat(document.getElementById('giftVal').value);
+            if(!code || isNaN(val)) return alert("Invalid entry!");
+
+            await set(ref(db, `gifts/${code}`), {
+                amount: val, active: true, createdAt: new Date().toISOString()
+            });
+            alert(`DG Card [${code}] for ₹${val} is now active.`);
+            document.getElementById('giftCode').value = "";
+            document.getElementById('giftVal').value = "";
+        };
+
+        window.placeOrder = async () => {
+            if(myBal <= 0) return alert("Insufficient Wallet Balance!");
+            
+            const res = await fetch(`${BACKEND}/place-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: document.getElementById('svcSel').value,
+                    link: document.getElementById('orderLink').value,
+                    quantity: document.getElementById('orderQty').value,
+                    token: "DGPRO_ULTRA_SECURE_X99" // Secure Token
+                })
+            });
+            const data = await res.json();
+            if(data.success) alert("Order Processed Successfully!");
+            else alert("Order Failed: " + (data.error || "Server Issue"));
+        };
+
+        window.handleGoogle = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth).then(() => location.reload());
+    </script>
+</body>
+  </html>
+  
