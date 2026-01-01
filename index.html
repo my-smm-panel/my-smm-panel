@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGPRO - MASTER PANEL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #050810; color: white; font-family: sans-serif; }
+        .glass { background: rgba(22, 29, 47, 0.8); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .admin-only { border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.05); }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="authBox" class="fixed inset-0 bg-black z-[999] flex items-center justify-center">
+        <div class="glass p-10 text-center">
+            <h2 class="text-3xl font-black mb-6 italic text-blue-500">DGPRO</h2>
+            <button onclick="handleGoogle()" class="bg-white text-black px-8 py-3 rounded-xl font-bold">Login with Google</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-md mx-auto space-y-6">
+        <div class="glass p-6 flex justify-between items-center">
+            <h1 class="text-xl font-bold italic">DGPRO</h1>
+            <div class="text-right">
+                <p id="uBal" class="text-xl font-black text-green-400">₹0.00</p>
+                <button onclick="logout()" class="text-[10px] text-red-500 font-bold uppercase">Sign Out</button>
+            </div>
+        </div>
+
+        <div class="glass p-6 space-y-4">
+            <h2 class="text-sm font-bold text-blue-400 uppercase">New Order</h2>
+            <select id="svcSel" class="w-full p-4 bg-slate-900 rounded-xl text-xs"></select>
+            <input id="orderLink" type="text" placeholder="Link" class="w-full p-4 bg-slate-900 rounded-xl text-xs">
+            <input id="orderQty" type="number" placeholder="Quantity" class="w-full p-4 bg-slate-900 rounded-xl text-xs">
+            <button onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black">PLACE ORDER</button>
+        </div>
+
+        <div id="adminPanel" class="hidden glass admin-only p-6 space-y-4">
+            <h2 class="text-red-500 font-black text-center border-b border-red-900 pb-2">MASTER ADMIN CONTROL</h2>
+            
+            <div class="space-y-2">
+                <p class="text-[10px] font-bold">MANAGE USER BALANCE</p>
+                <input id="targetUid" type="text" placeholder="User UID" class="w-full p-2 bg-black rounded text-xs">
+                <input id="amtInput" type="number" placeholder="Amount (+/-)" class="w-full p-2 bg-black rounded text-xs">
+                <button onclick="adminUpdateBal()" class="w-full bg-red-600 py-2 rounded font-bold text-xs">UPDATE BALANCE</button>
+            </div>
+
+            <div class="space-y-2 pt-4">
+                <p class="text-[10px] font-bold">GENERATE GIFT CARD</p>
+                <input id="giftCode" type="text" placeholder="CODE100" class="w-full p-2 bg-black rounded text-xs">
+                <input id="giftVal" type="number" placeholder="Value ₹" class="w-full p-2 bg-black rounded text-xs">
+                <button onclick="adminGenGift()" class="w-full bg-green-600 py-2 rounded font-bold text-xs">CREATE CARD</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, increment, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM", //
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+        const BACKEND = "https://dg-backend-jhqa.onrender.com"; //
+
+        let uRef, myBal = 0;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('authBox').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                // Admin Login Check
+                if(user.email === "stanix579@gmail.com") {
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                }
+
+                uRef = ref(db, 'users/' + user.uid);
+                onValue(uRef, (s) => {
+                    myBal = s.val() ? s.val().balance : 0;
+                    document.getElementById('uBal').innerText = "₹" + myBal.toFixed(2);
+                    if(!s.val()) set(uRef, { balance: 0, email: user.email });
+                });
+
+                fetch(`${BACKEND}/services`).then(r => r.json()).then(data => {
+                    document.getElementById('svcSel').innerHTML = data.map(s => `<option value="${s.service}">${s.name} - ₹${(s.rate*1.25).toFixed(2)}</option>`).join('');
+                });
+            }
+        });
+
+        // ADMIN FUNCTIONS
+        window.adminUpdateBal = () => {
+            const uid = document.getElementById('targetUid').value;
+            const amt = parseFloat(document.getElementById('amtInput').value);
+            update(ref(db, 'users/' + uid), { balance: increment(amt) }).then(() => alert("Success!"));
+        };
+
+        window.adminGenGift = () => {
+            const code = document.getElementById('giftCode').value;
+            const val = parseFloat(document.getElementById('giftVal').value);
+            set(ref(db, 'gifts/' + code), { amount: val, active: true }).then(() => alert("Gift Created!"));
+        };
+
+        // USER FUNCTIONS
+        window.placeOrder = async () => {
+            const res = await fetch(`${BACKEND}/place-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: document.getElementById('svcSel').value,
+                    link: document.getElementById('orderLink').value,
+                    quantity: document.getElementById('orderQty').value,
+                    token: "DGPRO_ULTRA_SECURE_X99"
+                })
+            });
+            const data = await res.json();
+            if(data.success) alert("Order Placed!");
+        };
+
+        window.handleGoogle = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth).then(() => location.reload());
+    </script>
+</body>
+</html>
