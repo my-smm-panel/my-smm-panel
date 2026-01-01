@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGPRO - FINAL AUTH FIX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: #161d2f; border: 1px solid #2d3748; border-radius: 24px; }
+        .admin-view { display: none; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="authBox" class="fixed inset-0 bg-[#0b0f1a] z-[5000] flex items-center justify-center p-4">
+        <div class="glass p-8 w-full max-w-sm text-center shadow-2xl border-blue-500/20">
+            <h2 class="text-3xl font-black mb-6 italic text-blue-500">DGPRO <span class="text-white">LOGIN</span></h2>
+            
+            <div class="space-y-4">
+                <input id="emailIn" type="email" placeholder="Email Address" class="w-full bg-slate-900 p-4 rounded-2xl outline-none text-xs border border-slate-700 focus:border-blue-500">
+                <input id="passIn" type="password" placeholder="Password" class="w-full bg-slate-900 p-4 rounded-2xl outline-none text-xs border border-slate-700 focus:border-blue-500">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="handleLogin()" class="bg-blue-600 py-4 rounded-2xl font-black uppercase text-[10px] shadow-lg">Login</button>
+                    <button onclick="handleSignup()" class="bg-slate-700 py-4 rounded-2xl font-black uppercase text-[10px]">Signup</button>
+                </div>
+
+                <div class="flex items-center gap-2 my-2"><div class="h-[1px] bg-slate-800 flex-1"></div><span class="text-[10px] text-slate-500">OR</span><div class="h-[1px] bg-slate-800 flex-1"></div></div>
+
+                <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2">
+                    <img src="https://www.google.com/favicon.ico" class="w-4"> Google Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <nav class="flex justify-between items-center mb-6 glass p-5">
+            <h1 class="text-xl font-black italic text-blue-500">DG<span class="text-white">PRO</span></h1>
+            <div class="text-right">
+                <p id="uBal" class="text-lg font-black text-green-400 font-mono">₹0.00</p>
+                <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase">Logout</button>
+            </div>
+        </nav>
+
+        <div class="glass p-6 mb-6 space-y-4 border-t-2 border-blue-500/20">
+            <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">🛒 New Order</h3>
+            <select id="catSel" onchange="loadSvcs()" class="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 text-xs outline-none focus:border-blue-500"></select>
+            <select id="svcSel" onchange="calcPrice()" class="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 text-xs outline-none focus:border-blue-500"></select>
+            <input id="orderLink" type="text" placeholder="Profile/Post Link" class="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 text-xs outline-none">
+            <div class="grid grid-cols-2 gap-3">
+                <input id="orderQty" oninput="calcPrice()" type="number" placeholder="Quantity" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 text-xs outline-none">
+                <div class="bg-slate-800 p-4 rounded-2xl text-center border border-slate-700 flex flex-col justify-center">
+                    <p class="text-[8px] text-slate-400 uppercase font-bold">Price</p>
+                    <span id="totalPrice" class="font-black text-yellow-500 text-sm">₹0.00</span>
+                </div>
+            </div>
+            <button onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-2xl font-black text-xs uppercase shadow-lg shadow-blue-900/40">Order Now</button>
+        </div>
+
+        <div id="adminArea" class="admin-view mt-10 space-y-6 pt-10 border-t border-slate-800">
+            <h2 class="text-xl font-black text-yellow-500 italic uppercase">🛡️ Admin Master Access</h2>
+            <div class="glass p-6 space-y-6">
+                <div class="bg-slate-900/50 p-4 rounded-2xl border border-yellow-500/20">
+                    <p class="text-[10px] text-yellow-500 font-black mb-3 uppercase tracking-tighter">Set Commission (%)</p>
+                    <div class="flex gap-2">
+                        <input id="profitIn" type="number" placeholder="e.g. 25" class="flex-1 bg-slate-800 p-3 rounded-xl text-xs border border-slate-700 outline-none">
+                        <button onclick="updateProfit()" class="bg-yellow-600 px-6 rounded-xl font-black text-[10px] uppercase">Save Profit</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="admGiftCode" placeholder="GIFT CODE" class="bg-slate-800 p-3 rounded-xl text-xs border border-slate-700 outline-none">
+                    <input id="admGiftAmt" type="number" placeholder="Amount ₹" class="bg-slate-800 p-3 rounded-xl text-xs border border-slate-700 outline-none">
+                </div>
+                <button onclick="createGiftCard()" class="w-full bg-green-600 py-3 rounded-xl font-black text-xs uppercase">Activate Gift</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3",
+            measurementId: "G-NHHV6CK20S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        const ADMIN_MAIL = "stanix579@gmail.com";
+        let uRef, myBal = 0, allSvcs = [], profitPct = 25;
+
+        // --- AUTH SYSTEM (FIXED) ---
+        window.handleSignup = async () => {
+            const e = document.getElementById('emailIn').value;
+            const p = document.getElementById('passIn').value;
+            if(!e || !p) return alert("Fill all fields");
+            try { 
+                await createUserWithEmailAndPassword(auth, e, p); 
+                alert("Signup Successful!");
+            } catch(err) { 
+                alert("Signup Error: " + err.message); 
+            }
+        };
+
+        window.handleLogin = async () => {
+            const e = document.getElementById('emailIn').value;
+            const p = document.getElementById('passIn').value;
+            if(!e || !p) return alert("Fill all fields");
+            try { 
+                await signInWithEmailAndPassword(auth, e, p); 
+            } catch(err) { 
+                alert("Login Error: User not found or wrong password"); 
+            }
+        };
+
+        window.handleGoogle = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth).then(() => location.reload());
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('authBox').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                uRef = doc(db, "users", user.uid);
+                let snap = await getDoc(uRef);
+                if (!snap.exists()) await setDoc(uRef, { balance: 0, email: user.email, status: 'active' });
+                myBal = (await getDoc(uRef)).data().balance;
+                document.getElementById('uBal').innerText = "₹" + myBal.toFixed(2);
+                
+                const conf = await getDoc(doc(db, "admin", "config"));
+                if(conf.exists()) profitPct = conf.data().profit;
+                if (user.email === ADMIN_MAIL) {
+                    document.getElementById('adminArea').style.display = 'block';
+                }
+                fetchSvcs();
+            }
+        });
+
+        // Other functions (fetchSvcs, loadSvcs, calcPrice, placeOrder, updateProfit, createGiftCard) remain the same...
+        async function fetchSvcs() {
+            try {
+                const res = await fetch('http://localhost:3000/services');
+                allSvcs = await res.json();
+                const cats = [...new Set(allSvcs.map(s => s.category))];
+                document.getElementById('catSel').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                loadSvcs();
+            } catch(e) { console.log("Backend Offline"); }
+        }
+
+        window.loadSvcs = () => {
+            const c = document.getElementById('catSel').value;
+            const svcs = allSvcs.filter(s => s.category === c);
+            document.getElementById('svcSel').innerHTML = svcs.map(s => {
+                const sellPrice = s.rate * (1 + profitPct/100);
+                return `<option value="${s.rate}" data-id="${s.service}">${s.name} - ₹${sellPrice.toFixed(2)}</option>`;
+            }).join('');
+            calcPrice();
+        };
+
+        window.calcPrice = () => {
+            const costRate = parseFloat(document.getElementById('svcSel').value);
+            const sellRate = costRate * (1 + profitPct/100);
+            const qty = parseInt(document.getElementById('orderQty').value) || 0;
+            const total = (sellRate / 1000) * qty;
+            document.getElementById('totalPrice').innerText = "₹" + total.toFixed(2);
+        };
+
+        window.placeOrder = async () => {
+            const svcEl = document.getElementById('svcSel');
+            const sid = svcEl.options[svcEl.selectedIndex].getAttribute('data-id');
+            const link = document.getElementById('orderLink').value;
+            const qty = document.getElementById('orderQty').value;
+            const total = parseFloat(document.getElementById('totalPrice').innerText.replace('₹',''));
+            if(!link || qty < 100) return alert("Enter link and Min 100 Qty!");
+            if(myBal < total) return alert("Low Balance!");
+            try {
+                const res = await fetch('http://localhost:3000/place-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service: sid, link: link, quantity: qty })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    await updateDoc(uRef, { balance: increment(-total) });
+                    alert("Order Success! Order ID: " + data.orderId);
+                    location.reload();
+                } else { alert("Provider Error: " + data.error); }
+            } catch(e) { alert("Backend Offline!"); }
+        };
+
+        window.updateProfit = async () => {
+            const p = parseFloat(document.getElementById('profitIn').value);
+            await setDoc(doc(db, "admin", "config"), { profit: p }, { merge: true });
+            alert("Global Profit set to " + p + "%"); location.reload();
+        };
+
+        window.createGiftCard = async () => {
+            const code = document.getElementById('admGiftCode').value.toUpperCase();
+            const amt = parseFloat(document.getElementById('admGiftAmt').value);
+            await setDoc(doc(db, "gifts", code), { amount: amt, active: true });
+            alert("Gift Card Active: " + code);
+        };
+    </script>
+</body>
+</html>
