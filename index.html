@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGPRO - PROTECTED PANEL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: #161d2f; border: 1px solid #2d3748; border-radius: 24px; }
+        /* SECURITY: Admin area ko default hide rakha hai */
+        .admin-view { display: none; visibility: hidden; }
+        .input-box { background: #0f172a; border: 1px solid #1e293b; color: white; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .status-badge { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+        .online { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid #22c55e; }
+        .offline { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <div id="authBox" class="fixed inset-0 bg-[#0b0f1a] z-[5000] flex items-center justify-center p-4">
+        <div class="glass p-8 w-full max-w-sm text-center shadow-2xl border-blue-500/20">
+            <h2 class="text-3xl font-black mb-6 italic text-blue-500">DGPRO <span class="text-white">SMM</span></h2>
+            <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 hover:bg-slate-200 transition-all">
+                <img src="https://www.google.com/favicon.ico" class="w-4"> Continue with Google
+            </button>
+            <p class="text-[10px] text-slate-500 mt-4 uppercase font-bold tracking-widest">Master Security Active</p>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <nav class="flex justify-between items-center mb-6 glass p-5 border-b border-blue-500/10">
+            <h1 class="text-xl font-black italic text-blue-500">DG<span class="text-white">PRO</span></h1>
+            <div class="text-right">
+                <p id="uBal" class="text-lg font-black text-green-400 font-mono">₹0.00</p>
+                <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase">Sign Out</button>
+            </div>
+        </nav>
+
+        <div class="glass p-6 border-l-4 border-yellow-500 mb-6 shadow-lg">
+            <h3 class="text-[10px] font-black text-yellow-500 uppercase mb-4 tracking-widest">Add Balance</h3>
+            <a href="https://wa.me/917775965170?text=I%20need%20Gift%20Card" target="_blank" class="w-full bg-green-600 py-3 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 mb-4 hover:bg-green-500 transition-all">
+                <i class="fab fa-whatsapp"></i> Buy Gift Card
+            </a>
+            <div class="flex gap-2">
+                <input id="giftIn" placeholder="Enter Code" class="flex-1 p-3 rounded-xl input-box text-xs font-bold uppercase">
+                <button onclick="redeemGift()" class="bg-yellow-600 px-6 rounded-xl font-black text-[10px] uppercase hover:bg-yellow-500">Redeem</button>
+            </div>
+        </div>
+
+        <div class="glass p-6 mb-6 space-y-4 shadow-xl border-t-2 border-blue-500/20">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">🛒 New Order</h3>
+                <span id="apiStatus" class="status-badge offline">Authenticating...</span>
+            </div>
+            <select id="catSel" onchange="loadSvcs()" class="w-full p-4 rounded-2xl input-box text-xs font-bold"></select>
+            <select id="svcSel" onchange="calcPrice()" class="w-full p-4 rounded-2xl input-box text-xs font-bold"></select>
+            <input id="orderLink" type="text" placeholder="Profile/Post Link" class="w-full p-4 rounded-2xl input-box text-xs font-bold">
+            <div class="grid grid-cols-2 gap-3">
+                <input id="orderQty" oninput="calcPrice()" type="number" placeholder="Qty" class="p-4 rounded-2xl input-box text-xs font-bold">
+                <div class="bg-slate-800 p-4 rounded-2xl text-center border border-slate-700">
+                    <p class="text-[8px] text-slate-400 uppercase font-bold">Price</p>
+                    <span id="totalPrice" class="font-black text-yellow-500 text-sm">₹0.00</span>
+                </div>
+            </div>
+            <button onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-2xl font-black text-xs uppercase hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/40">Confirm Order</button>
+        </div>
+
+        <div id="adminArea" class="admin-view mt-10 p-6 glass border-t-2 border-red-500/30">
+            <h2 class="text-sm font-black text-yellow-500 uppercase mb-4 italic">🛡️ Master Control (Stanix Only)</h2>
+            <div class="space-y-4">
+                <div class="bg-slate-900/50 p-4 rounded-2xl border border-blue-500/10">
+                    <p class="text-[9px] text-blue-400 font-black mb-2 uppercase">Global Commission (%)</p>
+                    <div class="flex gap-2">
+                        <input id="profitIn" type="number" placeholder="25" class="flex-1 p-3 rounded-xl input-box text-xs">
+                        <button onclick="updateProfit()" class="bg-blue-600 px-6 rounded-xl font-black text-[10px] uppercase">Update</button>
+                    </div>
+                </div>
+                <div class="bg-slate-900/50 p-4 rounded-2xl border border-green-500/10">
+                    <p class="text-[9px] text-green-400 font-black mb-2 uppercase">Create Master Gift Card</p>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input id="admGiftCode" placeholder="GIFT-XXXX" class="p-3 rounded-xl input-box text-xs uppercase">
+                        <input id="admGiftAmt" type="number" placeholder="Amount" class="p-3 rounded-xl input-box text-xs">
+                    </div>
+                    <button onclick="createGiftCard()" class="w-full bg-green-600 py-3 rounded-xl font-black text-[10px] uppercase">Generate & Sync</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lowBalPopup" class="hidden fixed inset-0 bg-black/90 z-[6000] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass p-8 w-full max-w-sm text-center border-red-500/50">
+            <i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i>
+            <h2 class="text-xl font-black mb-2 uppercase text-white">Insufficient Funds</h2>
+            <p class="text-xs text-slate-400 mb-6">Security check failed: Your balance is too low for this transaction.</p>
+            <a href="https://wa.me/917775965170?text=I%20want%20to%20recharge%20my%20DGPRO%20panel" class="block w-full bg-green-600 py-4 rounded-xl font-black text-xs uppercase mb-3 shadow-lg shadow-green-900/40">Buy DG Gift Card</a>
+            <button onclick="document.getElementById('lowBalPopup').classList.add('hidden')" class="text-slate-500 text-[10px] font-black uppercase">Cancel Request</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, increment, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+        
+        const ADMIN_MAIL = "stanix579@gmail.com"; //
+        const BACKEND_URL = "https://dg-backend-jhqa.onrender.com"; //
+        const MASTER_TOKEN = "DGPRO_MASTER_SECURE_77"; // Internal Security Token
+
+        let uRef, myBal = 0, allSvcs = [], profitPct = 25;
+
+        window.handleGoogle = () => signInWithPopup(auth, provider).catch(e => alert("Access Denied: Check Domain Whitelist!"));
+        window.logout = () => signOut(auth).then(() => location.reload());
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('authBox').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                // SECURITY: Realtime Database Connection
+                uRef = ref(db, 'users/' + user.uid);
+                onValue(uRef, (snap) => {
+                    const data = snap.val();
+                    if (data) {
+                        myBal = data.balance || 0;
+                        document.getElementById('uBal').innerText = "₹" + myBal.toFixed(2);
+                    } else {
+                        set(uRef, { balance: 0, email: user.email });
+                    }
+                });
+
+                // ADMIN HARD-LOCK: Check email against Master Email
+                if (user.email === ADMIN_MAIL) {
+                    const adminEl = document.getElementById('adminArea');
+                    adminEl.style.display = 'block';
+                    adminEl.style.visibility = 'visible';
+                }
+
+                // Fetch Profit from Secure Admin Path
+                onValue(ref(db, 'admin/config'), (snap) => {
+                    if(snap.val()) profitPct = snap.val().profit || 25;
+                });
+
+                fetchSvcs();
+            }
+        });
+
+        async function fetchSvcs() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/services`);
+                allSvcs = await res.json();
+                const cats = [...new Set(allSvcs.map(s => s.category))];
+                document.getElementById('catSel').innerHTML = `<option value="">Select Category</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                document.getElementById('apiStatus').innerText = "SECURE CONNECTION: ACTIVE";
+                document.getElementById('apiStatus').className = "status-badge online";
+            } catch(e) { 
+                document.getElementById('apiStatus').innerText = "BACKEND RE-INITIALIZING..."; 
+            }
+        }
+
+        window.loadSvcs = () => {
+            const c = document.getElementById('catSel').value;
+            const svcs = allSvcs.filter(s => s.category === c);
+            document.getElementById('svcSel').innerHTML = `<option value="">Select Service</option>` + svcs.map(s => {
+                const sellPrice = s.rate * (1 + profitPct/100);
+                return `<option value="${s.rate}" data-id="${s.service}">${s.name} - ₹${sellPrice.toFixed(2)}</option>`;
+            }).join('');
+        };
+
+        window.calcPrice = () => {
+            const cost = parseFloat(document.getElementById('svcSel').value) || 0;
+            const sell = cost * (1 + profitPct/100);
+            const total = (sell / 1000) * (parseInt(document.getElementById('orderQty').value) || 0);
+            document.getElementById('totalPrice').innerText = "₹" + total.toFixed(2);
+        };
+
+        window.placeOrder = async () => {
+            const total = parseFloat(document.getElementById('totalPrice').innerText.replace('₹',''));
+            
+            // SECURITY: Multiple balance checks before hit
+            if(myBal < total || myBal <= 0) {
+                document.getElementById('lowBalPopup').classList.remove('hidden');
+                return;
+            }
+
+            const sid = document.getElementById('svcSel').options[document.getElementById('svcSel').selectedIndex].getAttribute('data-id');
+            const link = document.getElementById('orderLink').value;
+            const qty = document.getElementById('orderQty').value;
+
+            if(!link || qty < 10) return alert("Security Error: Invalid Data Input!");
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/place-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        service: sid, link: link, quantity: qty,
+                        secretToken: MASTER_TOKEN // SECURITY TOKEN
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    await update(uRef, { balance: increment(-total) });
+                    alert("Order Processed Successfully! ID: " + data.orderId);
+                    location.reload();
+                } else { alert("Provider Security: " + data.error); }
+            } catch(e) { alert("Server Synchronizing... Try again!"); }
+        };
+
+        // ADMIN SECURE TOOLS
+        window.redeemGift = async () => {
+            const code = document.getElementById('giftIn').value.toUpperCase().trim();
+            const gRef = ref(db, 'gifts/' + code);
+            const snap = await get(gRef);
+            if(snap.exists() && snap.val().active) {
+                await update(uRef, { balance: increment(snap.val().amount) });
+                await update(gRef, { active: false });
+                alert("Security Verified: Balance Synced!");
+            } else { alert("Invalid or Used Code!"); }
+        };
+
+        window.updateProfit = async () => {
+            const p = parseFloat(document.getElementById('profitIn').value);
+            await set(ref(db, 'admin/config'), { profit: p });
+            alert("Master Commission Updated!");
+        };
+
+        window.createGiftCard = async () => {
+            const code = document.getElementById('admGiftCode').value.toUpperCase();
+            const amt = parseFloat(document.getElementById('admGiftAmt').value);
+            await set(ref(db, 'gifts/' + code), { amount: amt, active: true });
+            alert("Master Gift Card Generated!");
+        };
+    </script>
+</body>
+</html>
