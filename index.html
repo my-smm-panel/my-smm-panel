@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DGPRO - FlashSMM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Mobile Smooth Scrolling */
+        html, body { height: 100%; overscroll-behavior: none; background-color: #020617; color: white; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        #mainContainer { height: calc(100vh - 64px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .nav-item.active { color: #3b82f6; }
+        .card-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(255,255,255,0.05); }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .neo-input { background: #0a0f1d; border: 1px solid #1e293b; color: white; border-radius: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen" class="fixed inset-0 bg-[#020617] z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mb-4"></div>
+        <p class="text-xs font-bold text-gray-400 tracking-widest animate-pulse">DGPRO LOADING...</p>
+    </div>
+
+    <div id="authScreen" class="hidden fixed inset-0 bg-[#020617] z-[9999] flex items-center justify-center p-6">
+        <div class="glass p-10 text-center w-full max-w-sm">
+            <h2 class="text-4xl font-black mb-8 italic text-blue-500 tracking-tighter">DG<span class="text-white">PRO</span></h2>
+            <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl">
+                <img src="https://www.google.com/favicon.ico" class="w-5"> Login with Google
+            </button>
+        </div>
+    </div>
+
+    <div id="appScreen" class="hidden h-full flex flex-col">
+        
+        <div class="bg-slate-900/50 backdrop-blur-md px-4 py-3 flex justify-between items-center shadow-sm z-20">
+            <h1 class="font-black text-white text-lg italic"><i class="fas fa-bolt text-blue-500 mr-1"></i> FlashSMM</h1>
+            <div onclick="openAddMoney()" class="flex items-center gap-2 bg-blue-600/10 text-white px-3 py-1.5 rounded-full border border-blue-500/20 cursor-pointer active:scale-95 transition">
+                <span id="headerBalance" class="font-mono font-bold text-green-400">₹0.00</span>
+                <div class="bg-blue-500 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold">+</div>
+            </div>
+        </div>
+
+        <div id="mainContainer" class="w-full">
+            
+            <div id="homeTab" class="tab-content p-4 space-y-4">
+                <div class="card-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden flex items-center gap-4">
+                    <img id="uImg" class="w-14 h-14 rounded-full border-2 border-blue-500 shadow-lg" src="">
+                    <div>
+                        <h2 class="text-xl font-black" id="userNameDisplay">Hello User</h2>
+                        <p class="text-[10px] opacity-60 uppercase tracking-widest">Premium SMM Member</p>
+                    </div>
+                </div>
+
+                <div class="glass p-5 space-y-4">
+                    <h3 class="font-bold text-blue-500 text-xs uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-shopping-cart"></i> New Order
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <select id="catSelect" onchange="loadServices()" class="w-full p-4 neo-input text-xs font-bold outline-none"></select>
+                        <select id="serviceSelect" onchange="calcPrice()" class="w-full p-4 neo-input text-xs font-bold outline-none"></select>
+                        <input type="text" id="link" placeholder="Paste Link Here" class="w-full p-4 neo-input text-xs font-bold outline-none">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="qty" oninput="calcPrice()" placeholder="Quantity" class="p-4 neo-input text-xs font-bold outline-none">
+                            <div class="flex flex-col justify-center items-center bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">Cost</span>
+                                <span class="text-lg font-black text-blue-400">₹<span id="totalPrice">0.00</span></span>
+                            </div>
+                        </div>
+                        <button onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-sm shadow-lg shadow-blue-900/40">Place Order</button>
+                    </div>
+                    
+                    <a href="https://wa.me/917775965170?text=HELLO%20DG%20Sir%0AMujhe%20DG%20gift%20card%20buy%20karna%20hai" target="_blank" class="block w-full text-center py-3 text-[10px] font-black text-green-500 border border-green-500/10 rounded-xl bg-green-500/5">
+                        <i class="fab fa-whatsapp mr-1"></i> BUY DG GIFT CARD
+                    </a>
+                </div>
+
+                <div id="adminPanel" class="hidden glass border-2 border-red-500/20 p-5 space-y-4">
+                    <h3 class="text-red-500 font-black text-[10px] uppercase text-center">Admin Control</h3>
+                    <input id="giftCode" type="text" placeholder="CODE" class="w-full p-3 neo-input text-xs font-bold uppercase">
+                    <input id="giftVal" type="number" placeholder="Amount ₹" class="w-full p-3 neo-input text-xs font-bold">
+                    <button onclick="adminGenGift()" class="w-full bg-red-600 py-3 rounded-xl font-bold text-xs uppercase">Generate Gift</button>
+                </div>
+            </div>
+
+            <div id="historyTab" class="tab-content hidden p-4">
+                <h2 class="text-lg font-black text-white mb-4 italic">Recent Orders</h2>
+                <div id="orderHistoryList" class="space-y-3 pb-20">
+                    <p class="text-center text-slate-500 text-xs mt-10">No orders yet.</p>
+                </div>
+            </div>
+
+            <div id="profileTab" class="tab-content hidden p-4">
+                <div class="glass p-6 text-center mb-6">
+                    <img id="pImg" class="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-blue-500" src="">
+                    <h3 class="font-black text-xl" id="pName">User</h3>
+                    <p class="text-xs text-slate-500" id="pEmail">...</p>
+                    <p class="text-[9px] text-blue-500 mt-2 font-mono bg-blue-500/10 inline-block px-3 py-1 rounded-full" id="pUid">ID</p>
+                </div>
+                <button onclick="logoutUser()" class="w-full text-red-500 text-sm font-black border border-red-500/20 bg-red-500/5 py-4 rounded-xl">SIGN OUT</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-30 shadow-2xl">
+            <button onclick="switchTab('home')" class="nav-item active flex flex-col items-center w-full">
+                <i class="fas fa-home text-xl mb-1"></i><span class="text-[9px] font-bold uppercase">Home</span>
+            </button>
+            <button onclick="switchTab('history')" class="nav-item flex flex-col items-center w-full text-slate-500">
+                <i class="fas fa-history text-xl mb-1"></i><span class="text-[9px] font-bold uppercase">Orders</span>
+            </button>
+            <button onclick="switchTab('profile')" class="nav-item flex flex-col items-center w-full text-slate-500">
+                <i class="fas fa-user text-xl mb-1"></i><span class="text-[9px] font-bold uppercase">Profile</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="addMoneyModal" class="hidden fixed inset-0 bg-black/90 z-[10000] flex items-center justify-center p-6">
+        <div class="glass p-8 w-full max-w-sm text-center space-y-5">
+            <h2 class="text-2xl font-black">REDEEM <span class="text-blue-500">GIFT</span></h2>
+            <input id="redeemCode" type="text" placeholder="ENTER CODE" class="w-full p-5 neo-input text-center font-black text-2xl uppercase text-blue-400">
+            <button onclick="redeemGift()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Redeem Now</button>
+            <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-slate-500 text-[10px] font-black uppercase">Cancel</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, increment, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
+            authDomain: "smspanel-76488.firebaseapp.com",
+            databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
+            projectId: "smspanel-76488",
+            storageBucket: "smspanel-76488.firebasestorage.app",
+            messagingSenderId: "478520093402",
+            appId: "1:478520093402:web:bf976787e46af3017b13e3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+        const BACKEND = "https://dg-backend-jhqa.onrender.com";
+        const ADMIN_UID = "CmEr126Ej8YuXZuPV4Pm88tR9Il2";
+
+        let uRef, myBal = 0, userUID = "", allSvcs = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            if (user) {
+                userUID = user.uid;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                
+                // Set Profile Data
+                document.getElementById('uImg').src = user.photoURL;
+                document.getElementById('pImg').src = user.photoURL;
+                document.getElementById('userNameDisplay').innerText = "Hi, " + user.displayName.split(' ')[0];
+                document.getElementById('pName').innerText = user.displayName;
+                document.getElementById('pEmail').innerText = user.email;
+                document.getElementById('pUid').innerText = user.uid;
+
+                if(user.uid === ADMIN_UID) document.getElementById('adminPanel').classList.remove('hidden');
+
+                uRef = ref(db, 'users/' + user.uid);
+                onValue(uRef, (s) => {
+                    myBal = s.val() ? s.val().balance : 0;
+                    document.getElementById('headerBalance').innerText = "₹" + myBal.toFixed(2);
+                    if(!s.val()) set(uRef, { balance: 0, email: user.email, name: user.displayName });
+                });
+
+                // Load History
+                onValue(ref(db, 'orders'), (snap) => {
+                    const l = document.getElementById('orderHistoryList');
+                    l.innerHTML = "";
+                    snap.forEach(child => {
+                        const d = child.val();
+                        if(d.userId === user.uid) {
+                            l.innerHTML = `
+                                <div class="glass p-4 border-l-4 border-blue-500">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="text-[11px] font-black truncate w-40 uppercase">${d.service}</h4>
+                                        <span class="text-[8px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-black">${d.status}</span>
+                                    </div>
+                                    <p class="text-[9px] text-slate-500 mt-1">QTY: ${d.quantity} | ₹${d.price}</p>
+                                </div>` + l.innerHTML;
+                        }
+                    });
+                });
+
+                fetch(`${BACKEND}/services`).then(r => r.json()).then(data => {
+                    allSvcs = data;
+                    const cats = [...new Set(data.map(s => s.category))];
+                    document.getElementById('catSelect').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                    loadServices();
+                });
+            } else {
+                document.getElementById('authScreen').classList.remove('hidden');
+                document.getElementById('appScreen').classList.add('hidden');
+            }
+        });
+
+        window.switchTab = (t) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(t + 'Tab').classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.add('text-slate-500'));
+            event.currentTarget.classList.remove('text-slate-500');
+            event.currentTarget.classList.add('text-blue-500');
+        };
+
+        window.loadServices = () => {
+            const cat = document.getElementById('catSelect').value;
+            const filtered = allSvcs.filter(s => s.category === cat);
+            document.getElementById('serviceSelect').innerHTML = filtered.map(s => `<option value="${s.rate}" data-id="${s.service}">${s.name} - ₹${(s.rate*1.25).toFixed(2)}</option>`).join('');
+            calcPrice();
+        };
+
+        window.calcPrice = () => {
+            const rate = parseFloat(document.getElementById('serviceSelect').value);
+            const qty = parseInt(document.getElementById('qty').value) || 0;
+            const total = (rate * 1.25 / 1000) * qty;
+            document.getElementById('totalPrice').innerText = total.toFixed(2);
+        };
+
+        window.placeOrder = async () => {
+            const price = parseFloat(document.getElementById('totalPrice').innerText);
+            if(myBal < price) return alert("Low Balance!");
+            const sid = document.getElementById('serviceSelect').options[document.getElementById('serviceSelect').selectedIndex].getAttribute('data-id');
+            const sn = document.getElementById('serviceSelect').options[document.getElementById('serviceSelect').selectedIndex].text.split('-')[0];
+            
+            const res = await fetch(`${BACKEND}/place-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: sid, link: document.getElementById('link').value,
+                    quantity: document.getElementById('qty').value,
+                    token: "DGPRO_ULTRA_SECURE_X99"
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                await update(uRef, { balance: increment(-price) });
+                await set(ref(db, 'orders/' + Date.now()), { userId: userUID, service: sn, price: price, quantity: document.getElementById('qty').value, status: 'Pending', timestamp: Date.now() });
+                alert("Order Success!");
+                switchTab('history');
+            }
+        };
+
+        window.redeemGift = async () => {
+            const code = document.getElementById('redeemCode').value.toUpperCase().trim();
+            const giftRef = ref(db, `gifts/${code}`);
+            const snap = await get(giftRef);
+            if(snap.exists() && snap.val().active) {
+                await update(uRef, { balance: increment(snap.val().amount) });
+                await update(giftRef, { active: false, redeemedBy: userUID });
+                alert("Redeemed!");
+                document.getElementById('addMoneyModal').classList.add('hidden');
+            } else alert("Invalid Code!");
+        };
+
+        window.adminGenGift = async () => {
+            const code = document.getElementById('giftCode').value.toUpperCase().trim();
+            const val = parseFloat(document.getElementById('giftVal').value);
+            await set(ref(db, `gifts/${code}`), { amount: val, active: true });
+            alert("Gift Created!");
+        };
+
+        window.handleGoogle = () => signInWithPopup(auth, provider);
+        window.logoutUser = () => signOut(auth).then(() => location.reload());
+        window.openAddMoney = () => document.getElementById('addMoneyModal').classList.remove('hidden');
+    </script>
+</body>
+</html>
