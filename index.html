@@ -36,10 +36,9 @@
         <div onclick="switchTab('history'); toggleSidebar()" class="sidebar-item"><i class="fas fa-list text-purple-400"></i> My Orders</div>  
         <div onclick="openAddMoney(); toggleSidebar()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Deposit Funds</div>  
         
-        <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2">Support Center</p>
-        <div onclick="window.open('https://wa.me/917775975170')" class="sidebar-item"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp Help</div>
-        <div onclick="window.open('https://telegram.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram Bot</div>
-        <div onclick="window.open('https://www.instagram.com/dg.service.1?igsh=NXR0bWQ1N24zcGxq')" class="sidebar-item"><i class="fab fa-instagram text-pink-500"></i> Instagram Support</div>
+        <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2 tracking-widest">Support Center</p>
+        <div onclick="window.open('https://t.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram Support</div>
+        <div onclick="window.open('https://wa.me/917775965170')" class="sidebar-item"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp Support</div>
 
         <div id="adminSidebar" class="hidden mt-4 pt-4 border-t border-white/10">  
             <p class="px-5 text-[9px] font-black text-red-500 uppercase mb-2">Master Admin</p>  
@@ -95,23 +94,27 @@
             </div>  
         </div>  
         <div id="historyTab" class="tab-content hidden p-4"><div id="orderHistoryList" class="space-y-3"></div></div>  
-        <div id="profileTab" class="tab-content hidden p-4 text-center">  
+        <div id="profileTab" class="tab-content hidden p-4">  
             <div id="adminPanel" class="hidden space-y-4">  
-                <div class="glass p-5 border-2 border-red-500/30">  
-                    <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center tracking-widest">Master Admin Dashboard</h3>  
+                <div class="glass p-5 border-2 border-blue-500/30">  
+                    <h3 class="text-blue-500 font-black text-[10px] uppercase mb-4 text-center tracking-widest">Master Admin Control</h3>  
+                    
+                    <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <p class="text-[10px] text-white font-bold mb-3 uppercase tracking-widest">Edit User Balance</p>
+                        <input id="adminTargetUid" type="text" placeholder="User UID (Click below list to copy)" class="w-full p-3 neo-input text-[10px] mb-2 outline-none">
+                        <div class="flex gap-2">
+                            <input id="adminEditBalAmt" type="number" placeholder="Amount (e.g. 100 or -50)" class="flex-1 p-3 neo-input text-[10px] outline-none">
+                            <button onclick="manualBalanceUpdate()" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">Update</button>
+                        </div>
+                    </div>
+
                     <div class="mb-6 p-3 bg-white/5 rounded-xl border border-white/5">  
-                        <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Manage Commission (Current: <span id="curCommText">...</span>)</p>  
+                        <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Set Commission (Current: <span id="curCommText">...</span>)</p>  
                         <div class="flex gap-2">  
                             <input id="newCommInput" type="number" step="0.01" class="flex-1 p-2 bg-black border border-white/10 rounded-lg text-xs outline-none">  
-                            <button onclick="updateCommission()" class="bg-red-600 px-4 rounded-lg font-bold text-[10px]">UPDATE</button>  
+                            <button onclick="updateCommission()" class="bg-blue-600 px-4 rounded-lg font-bold text-[10px]">SAVE</button>  
                         </div>  
-                    </div>
-                    <div class="mb-6 p-3 bg-white/5 rounded-xl border border-red-500/10">
-                        <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Direct Balance Inject</p>
-                        <input id="targetUID" type="text" placeholder="Target User UID" class="w-full p-2 bg-black border border-white/10 rounded-lg text-xs outline-none mb-2">
-                        <input id="injectAmount" type="number" placeholder="Amount (₹)" class="w-full p-2 bg-black border border-white/10 rounded-lg text-xs outline-none mb-2">
-                        <button onclick="injectBalance()" class="w-full bg-green-700 py-2 rounded-lg font-bold text-[10px]">ADD BALANCE</button>
-                    </div>
+                    </div>  
                     <div id="adminPayList" class="space-y-2 mb-4"></div>  
                     <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>  
                 </div>  
@@ -119,8 +122,7 @@
             <div class="glass p-6 text-center mt-6">  
                 <img id="pImg" class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-blue-500" src="">  
                 <h3 class="font-black text-lg" id="pName">User Name</h3>  
-                <p class="text-xs opacity-50" id="pEmail">Email</p>
-                <button onclick="logoutUser()" class="w-full text-red-500 font-black border border-red-500/20 py-4 rounded-xl uppercase text-xs mt-6">Logout Account</button>  
+                <button onclick="logoutUser()" class="w-full text-red-500 font-black border border-red-500/20 py-4 rounded-xl uppercase text-xs mt-6">Logout</button>  
             </div>  
         </div>  
     </div>  
@@ -134,13 +136,12 @@
 
 <div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6 text-center">  
     <div class="glass p-8 w-full max-w-sm space-y-4">  
-        <h2 class="text-xl font-black italic text-green-500 uppercase">Deposit Center</h2>  
-        <img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl">  
-        <p class="text-[10px] font-bold text-blue-400">Scan & Pay Any UPI App</p>
-        <input id="payAmt" type="number" placeholder="Enter Paid Amount" class="w-full p-4 neo-input text-center font-bold">  
-        <input id="utrCode" type="text" placeholder="Enter 12 Digit UTR/Txn ID" class="w-full p-4 neo-input text-center font-bold">  
-        <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase shadow-lg shadow-blue-500/20">Notify Admin</button>  
-        <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-40">Cancel</button>  
+        <h2 class="text-xl font-black italic">ADD FUNDS</h2>  
+        <img id="qrImg" src="" class="w-40 h-40 mx-auto bg-white p-2 rounded-xl">  
+        <input id="payAmt" type="number" placeholder="Amount" class="w-full p-4 neo-input text-center font-bold">  
+        <input id="utrCode" type="text" placeholder="12 Digit UTR" class="w-full p-4 neo-input text-center font-bold">  
+        <button onclick="submitUTR()" class="w-full bg-green-600 py-4 rounded-xl font-black uppercase">Verify</button>  
+        <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-50">Close</button>  
     </div>  
 </div>  
 
@@ -170,7 +171,8 @@
     let myBal = 0, userUID = "", allSvcs = [], currentComm = 1.25;  
 
     const forceLoad = () => { document.getElementById('loadingScreen').classList.add('hidden'); if (!auth.currentUser) document.getElementById('authScreen').classList.remove('hidden'); };  
-    setTimeout(forceLoad, 3000);  
+    setTimeout(forceLoad, 3500);  
+    getRedirectResult(auth).catch(e => console.error(e.message));  
 
     onAuthStateChanged(auth, async (user) => {  
         if (user) {  
@@ -180,7 +182,6 @@
             document.getElementById('sideImg').src = document.getElementById('pImg').src = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`;  
             document.getElementById('sideName').innerText = user.displayName || user.email.split('@')[0];  
             document.getElementById('pName').innerText = user.displayName || user.email.split('@')[0];  
-            document.getElementById('pEmail').innerText = user.email;
 
             onValue(ref(db, 'settings/commission'), (s) => {  
                 currentComm = s.val() || 1.25; document.getElementById('curCommText').innerText = currentComm; if(allSvcs.length > 0) loadServices();  
@@ -201,32 +202,45 @@
     window.handleGoogle = () => { if(/Android/i.test(navigator.userAgent)) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider).catch(e => alert(e.message)); };  
     window.handleEmailLogin = () => signInWithEmailAndPassword(auth, loginEmail.value, loginPass.value).catch(e => alert(e.message));  
     window.handleEmailSignup = () => createUserWithEmailAndPassword(auth, loginEmail.value, loginPass.value).catch(e => alert(e.message));  
+    window.updateCommission = async () => { const val = parseFloat(document.getElementById('newCommInput').value); if(val > 0) { await set(ref(db, 'settings/commission'), val); alert("Saved!"); } };  
     
-    // Admin Only: Inject Balance Feature
-    window.injectBalance = async () => {
-        const uid = document.getElementById('targetUID').value;
-        const amt = parseFloat(document.getElementById('injectAmount').value);
-        if(uid && amt > 0) {
-            await update(ref(db, `users/${uid}`), { balance: increment(amt) });
-            alert(`Injected ₹${amt} to user successfully!`);
+    // New Function: Master Admin Balance Update
+    window.manualBalanceUpdate = async () => {
+        const target = document.getElementById('adminTargetUid').value;
+        const amount = parseFloat(document.getElementById('adminEditBalAmt').value);
+        if(!target || isNaN(amount)) return alert("Please fill UID and valid amount");
+        
+        try {
+            await update(ref(db, 'users/' + target), {
+                balance: increment(amount)
+            });
+            alert("Success! Balance updated.");
+            document.getElementById('adminEditBalAmt').value = "";
+        } catch (e) {
+            alert("Error: " + e.message);
         }
     };
 
-    window.updateCommission = async () => { const val = parseFloat(document.getElementById('newCommInput').value); if(val > 0) { await set(ref(db, 'settings/commission'), val); alert("Saved!"); } };  
     window.loadAdminData = () => {  
         onValue(ref(db, 'payment_requests'), (snap) => {  
             const l = document.getElementById('adminPayList'); l.innerHTML = "<h4 class='text-[8px] opacity-50 mb-2 uppercase text-center font-black'>Verification</h4>";  
-            snap.forEach(child => { const d = child.val(); if(d.status === 'Pending') l.innerHTML += `<div class="bg-blue-600/10 p-2 rounded-xl flex justify-between items-center text-[10px] mb-2 font-bold"><div>₹${d.amount}<br><span class="opacity-50 text-[8px]">${d.utr}</span></div><div class="flex gap-1"><button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded shadow-lg">OK</button><button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded shadow-lg">X</button></div></div>`; });  
+            snap.forEach(child => { const d = child.val(); if(d.status === 'Pending') l.innerHTML += `<div class="bg-blue-600/10 p-2 rounded-xl flex justify-between items-center text-[10px] mb-2 font-bold"><div>₹${d.amount}<br><span class="opacity-50 text-[8px]">${d.utr}</span></div><div class="flex gap-1"><button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded">OK</button><button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded">X</button></div></div>`; });  
         });  
         onValue(ref(db, 'users'), (snap) => {  
-            const l = document.getElementById('userList'); l.innerHTML = "<h4 class='text-[8px] opacity-50 mb-2 uppercase text-center font-black'>Database Users (Click to Copy UID)</h4>";  
-            snap.forEach(child => { const u = child.val(); l.innerHTML += `<div onclick="navigator.clipboard.writeText('${child.key}'); alert('UID Copied')" class="flex justify-between py-1 text-[9px] font-bold border-b border-white/5 cursor-pointer"><span>${u.email}</span><span class="text-green-400">₹${(u.balance||0).toFixed(2)}</span></div>`; });  
+            const l = document.getElementById('userList'); l.innerHTML = "<h4 class='text-[8px] opacity-50 mb-2 uppercase text-center font-black'>Database (Click email to copy UID)</h4>";  
+            snap.forEach(child => { const u = child.val(); l.innerHTML += `<div onclick="copyUidToInput('${child.key}')" class="flex justify-between py-1 text-[9px] font-bold border-b border-white/5 cursor-pointer hover:bg-white/5 transition"><span>${u.email}</span><span class="text-green-400">₹${(u.balance||0).toFixed(2)}</span></div>`; });  
         });  
-    };  
+    };
+
+    window.copyUidToInput = (uid) => {
+        document.getElementById('adminTargetUid').value = uid;
+        alert("UID Copied to edit field!");
+    };
+
     window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await update(ref(db, `payment_requests/${k}`), { status: 'Approved' }); alert("Success!"); };  
     window.rejectPay = async (k) => { if(confirm("Reject?")) remove(ref(db, `payment_requests/${k}`)); };  
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };  
     window.switchTab = (t) => { document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); document.getElementById(t + 'Tab').classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(el => el.classList.add('text-slate-500')); event.currentTarget.classList.remove('text-slate-500'); event.currentTarget.classList.add('active'); };  
     window.openAddMoney = () => { document.getElementById('addMoneyModal').classList.remove('hidden'); document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7775965170@naviaxis&pn=DG-SERVICE&cu=INR`; };  
     window.loadServices = () => { const cat = document.getElementById('catSelect').value; const f = allSvcs.filter(s => s.category === cat); document.getElementById('serviceSelect').innerHTML = f.map(s => `<option value="${s.rate}" data-id="${s.service}">${s.name} - ₹${(s.rate*currentComm).toFixed(2)}</option>`).join(''); calcPrice(); };  
-    window.calcPrice = () => { const r = parseFloat(document.getElementById('serviceSelect').value) || 0; const q = parseInt(document.getElementById('qty').value) || 0; document.getElementById('tota
+    window.calcPrice = () => { const r = parseFloat(document.getElementById('serviceSelect').value) || 0; const q = parseInt(document.getElementById('qty').val
