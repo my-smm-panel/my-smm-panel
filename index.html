@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DG SERVICE - Ultimate Panel</title>
+    <title>DG SERVICE - Fixed Pro Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -21,11 +21,11 @@
 
 <div id="loadingScreen" class="fixed inset-0 bg-[#020617] z-[99999] flex flex-col items-center justify-center">
     <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mb-4"></div>
-    <p class="text-xs font-bold text-gray-400">INITIALIZING DG SERVICE...</p>
+    <p class="text-xs font-bold text-gray-400">LOADING DG SERVICE...</p>
 </div>
 
 <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 z-[900]"></div>
-<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 overflow-y-auto shadow-2xl">
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 overflow-y-auto">
     <div class="p-6 border-b border-white/5 flex items-center gap-3">
         <img id="sideImg" class="w-12 h-12 rounded-full border-2 border-blue-500" src="">
         <div><p id="sideName" class="text-sm font-black truncate w-32">User</p></div>
@@ -44,30 +44,27 @@
 <div id="appScreen" class="h-full flex flex-col hidden">
     <header class="bg-slate-900/80 p-4 flex justify-between items-center border-b border-white/5 sticky top-0 z-50">
         <button onclick="toggleSidebar()"><i class="fas fa-bars text-xl"></i></button>
-        <h1 class="font-black italic text-blue-500 uppercase">DG SERVICE</h1>
+        <h1 class="font-black italic text-blue-500 uppercase text-lg">DG SERVICE</h1>
         <div class="bg-blue-600/10 px-4 py-1 rounded-full border border-blue-500/20 text-green-400 font-bold" id="headerBalance">₹0.00</div>
     </header>
 
     <main id="mainContainer" class="p-4">
         <div id="homeTab" class="tab-content glass p-6 space-y-4">
             <h3 class="text-xs font-black text-blue-500 uppercase">Place New Order</h3>
-            <select id="catSelect" class="neo-input"><option>Loading...</option></select>
-            <input type="text" id="link" placeholder="Link" class="neo-input">
+            <select id="catSelect" class="neo-input"><option>🔍 Loading Services...</option></select>
+            <input type="text" id="link" placeholder="Order Link" class="neo-input">
             <input type="number" id="qty" placeholder="Quantity" class="neo-input">
-            <button class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Place Order</button>
+            <button class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase shadow-lg">Submit Order</button>
         </div>
 
-        <div id="historyTab" class="tab-content hidden space-y-3">
-            <h3 class="text-xs font-black text-purple-400 uppercase">My Order History</h3>
-            <div id="orderHistoryList"></div>
-        </div>
+        <div id="historyTab" class="tab-content hidden"><div id="orderHistoryList" class="space-y-3"></div></div>
 
         <div id="profileTab" class="tab-content hidden space-y-4">
             <div id="adminPanel" class="hidden glass p-5 border-2 border-red-500/20 space-y-6">
                 <h3 class="text-red-500 font-black text-xs uppercase text-center">Master Admin Control</h3>
                 
                 <div class="p-3 bg-white/5 rounded-xl border border-white/5">
-                    <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Global Commission: <span id="curCommText">...</span></p>
+                    <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Commission: <span id="curCommText">...</span></p>
                     <div class="flex gap-2">
                         <input id="newCommInput" type="number" step="0.01" class="neo-input text-xs" placeholder="1.25">
                         <button onclick="updateComm()" class="bg-blue-600 px-4 rounded-lg font-bold text-[10px]">SAVE</button>
@@ -75,25 +72,21 @@
                 </div>
 
                 <div id="adminPayRequests" class="space-y-2">
-                    <p class="text-[9px] font-black text-blue-400 uppercase">Pending Approvals</p>
+                    <p class="text-[9px] font-black text-blue-400 uppercase">Approval Queue</p>
                     <div id="payListContainer" class="space-y-2"></div>
                 </div>
 
                 <div class="p-3 bg-white/5 rounded-xl border border-white/5">
-                    <input id="adminTargetUid" type="text" placeholder="User UID" class="neo-input text-[10px] mb-2">
+                    <input id="adminTargetUid" type="text" placeholder="UID (Auto-fill by clicking list)" class="neo-input text-[10px] mb-2">
                     <div class="flex gap-2">
                         <input id="adminEditBalAmt" type="number" placeholder="Amt" class="neo-input text-xs">
                         <button onclick="manualBalanceUpdate()" class="bg-green-600 px-4 rounded-lg font-bold text-[10px]">INJECT</button>
                     </div>
                 </div>
-                <div id="userList" class="max-h-40 overflow-y-auto space-y-2 text-[10px]"></div>
+                <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
             </div>
             
-            <div class="glass p-6 text-center">
-                <img id="profileImg" class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-blue-500" src="">
-                <h3 id="profileName" class="font-black text-lg">User Name</h3>
-                <button onclick="logoutUser()" class="w-full text-red-500 font-black border border-red-500/20 py-4 rounded-xl uppercase text-xs mt-6">Logout Account</button>
-            </div>
+            <button onclick="logoutUser()" class="w-full text-red-500 font-black border border-red-500/20 py-4 rounded-xl uppercase text-xs">Logout Account</button>
         </div>
     </main>
 
@@ -106,11 +99,11 @@
 
 <div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6 text-center">
     <div class="glass p-8 w-full max-w-sm space-y-4">
-        <h2 class="text-xl font-black italic text-green-500">ADD FUNDS</h2>
+        <h2 class="text-xl font-black italic text-green-500 uppercase">Deposit Center</h2>
         <input id="payAmt" type="number" oninput="updateQR()" placeholder="Enter Amount" class="neo-input text-center font-bold">
         <div id="qrContainer" class="hidden"><img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl mb-4"></div>
         <input id="utrCode" type="text" placeholder="12 Digit UTR/Txn ID" class="neo-input text-center font-bold">
-        <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Verify Payment</button>
+        <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase shadow-lg">Verify Payment</button>
         <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-40">Cancel</button>
     </div>
 </div>
@@ -118,7 +111,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getDatabase, ref, onValue, update, increment, push, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, onValue, update, increment, push, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
@@ -132,15 +125,17 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
+    
+    // Config Fixed
+    const BACKEND = "https://dg-backend-jhqa.onrender.com"; 
     const ADMIN_UID = "cmEr126Ej8YuXZuPV4Pm88tR9Il2";
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         document.getElementById('loadingScreen').classList.add('hidden');
         if (user) {
             document.getElementById('appScreen').classList.remove('hidden');
             document.getElementById('sideName').innerText = user.displayName || user.email.split('@')[0];
-            document.getElementById('sideImg').src = document.getElementById('profileImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
-            document.getElementById('profileName').innerText = user.displayName;
+            document.getElementById('sideImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
 
             if(user.uid === ADMIN_UID) {
                 document.getElementById('adminPanel').classList.remove('hidden');
@@ -150,9 +145,83 @@
             onValue(ref(db, 'users/' + user.uid + '/balance'), (s) => {
                 document.getElementById('headerBalance').innerText = "₹" + (s.val() || 0).toFixed(2);
             });
-            onValue(ref(db, 'settings/commission'), (s) => { document.getElementById('curCommText').innerText = s.val() || "1.25"; });
+            onValue(ref(db, 'settings/commission'), (s) => { 
+                document.getElementById('curCommText').innerText = s.val() || "1.25"; 
+            });
+
+            // FIXED: Services Fetching
+            fetchServices();
         } else { signInWithPopup(auth, provider); }
     });
+
+    async function fetchServices() {
+        const select = document.getElementById('catSelect');
+        try {
+            const res = await fetch(`${BACKEND}/services`); // Backend route ensure karein
+            const data = await res.json();
+            select.innerHTML = data.map(s => `<option value="${s.rate}">${s.name} - ₹${s.rate}</option>`).join('');
+        } catch (e) { select.innerHTML = "<option>⚠️ Error Loading API Services</option>"; }
+    }
+
+    window.loadAdminData = () => {
+        // FIXED: Payment List & Reject Feature
+        onValue(ref(db, 'payment_requests'), (snap) => {
+            const container = document.getElementById('payListContainer');
+            container.innerHTML = "";
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.status === 'Pending') {
+                    container.innerHTML += `<div class="bg-blue-600/10 p-3 rounded-xl flex justify-between items-center text-[10px] mb-2 border border-white/5">
+                        <div>₹${d.amount} • ${d.utr}<br><span class="opacity-50">${d.email}</span></div>
+                        <div class="flex gap-1">
+                            <button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded">OK</button>
+                            <button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded">X</button>
+                        </div>
+                    </div>`;
+                }
+            });
+        });
+
+        // FIXED: User List Sync
+        onValue(ref(db, 'users'), (snap) => {
+            const list = document.getElementById('userList');
+            list.innerHTML = "";
+            snap.forEach(child => {
+                const u = child.val();
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer hover:bg-white/5">
+                    <span>${u.email}</span><span class="text-green-500 font-bold">₹${(u.balance||0).toFixed(2)}</span>
+                </div>`;
+            });
+        });
+    };
+
+    // Admin CORE Functions Fixed
+    window.approvePay = async (key, uid, amt) => {
+        await update(ref(db, `users/${uid}`), { balance: increment(amt) });
+        await remove(ref(db, `payment_requests/${key}`)); // Direct remove on approve
+        alert("Payment Approved & Balance Added!");
+    };
+
+    window.rejectPay = async (key) => {
+        if(confirm("Confirm Reject? Data will be deleted.")) {
+            await remove(ref(db, `payment_requests/${key}`));
+            alert("Request Rejected!");
+        }
+    };
+
+    window.manualBalanceUpdate = async () => {
+        const uid = document.getElementById('adminTargetUid').value;
+        const amt = parseFloat(document.getElementById('adminEditBalAmt').value);
+        if(!uid || isNaN(amt)) return alert("Select User & Enter Amount");
+        await update(ref(db, `users/${uid}`), { balance: increment(amt) });
+        alert("Balance Update Success!");
+    };
+
+    window.updateComm = async () => {
+        const val = parseFloat(document.getElementById('newCommInput').value);
+        await set(ref(db, 'settings/commission'), val);
+        alert("Global Commission Updated!");
+    };
 
     window.updateQR = () => {
         const amt = document.getElementById('payAmt').value;
@@ -167,44 +236,8 @@
         const amt = document.getElementById('payAmt').value;
         if(utr.length < 10) return alert("Invalid UTR");
         await push(ref(db, 'payment_requests'), { userId: auth.currentUser.uid, email: auth.currentUser.email, utr, amount: parseFloat(amt), status: 'Pending' });
-        alert("Payment Sent to Admin for Approval!");
+        alert("Verification Sent!");
         document.getElementById('addMoneyModal').classList.add('hidden');
-    };
-
-    window.loadAdminData = () => {
-        onValue(ref(db, 'payment_requests'), (snap) => {
-            const container = document.getElementById('payListContainer');
-            container.innerHTML = "";
-            snap.forEach(child => {
-                const d = child.val();
-                if(d.status === 'Pending') {
-                    container.innerHTML += `<div class="bg-blue-600/10 p-3 rounded-xl flex justify-between items-center text-[10px] font-bold">
-                        <div>₹${d.amount} • ${d.utr}<br><span class="opacity-50 text-[8px]">${d.email}</span></div>
-                        <div class="flex gap-1">
-                            <button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded">OK</button>
-                            <button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded text-white">X</button>
-                        </div>
-                    </div>`;
-                }
-            });
-        });
-        onValue(ref(db, 'users'), (snap) => {
-            const list = document.getElementById('userList');
-            list.innerHTML = "";
-            snap.forEach(child => {
-                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-500">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
-            });
-        });
-    };
-
-    window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await update(ref(db, `payment_requests/${k}`), { status: 'Approved' }); alert("Approved!"); };
-    window.rejectPay = async (k) => { if(confirm("Reject?")) remove(ref(db, k)); };
-    window.updateComm = async () => { const val = parseFloat(document.getElementById('newCommInput').value); await set(ref(db, 'settings/commission'), val); alert("Commission Updated!"); };
-    window.manualBalanceUpdate = async () => {
-        const uid = document.getElementById('adminTargetUid').value;
-        const amt = parseFloat(document.getElementById('adminEditBalAmt').value);
-        await update(ref(db, `users/${uid}`), { balance: increment(amt) });
-        alert("Injected!");
     };
 
     window.switchTab = (t) => {
@@ -218,5 +251,4 @@
     window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
-    </html>
-    
+</html>
