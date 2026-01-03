@@ -35,9 +35,9 @@
         </div>
     </div>
     <div class="flex flex-col py-2">
-        <div onclick="switchTab('home')" class="sidebar-item"><i class="fas fa-shopping-cart text-blue-400"></i> New Order</div>
-        <div onclick="switchTab('history')" class="sidebar-item"><i class="fas fa-list text-purple-400"></i> My Orders</div>
-        <div onclick="openAddMoney()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Deposit Funds</div>
+        <div onclick="switchTab('home'); toggleSidebar()" class="sidebar-item"><i class="fas fa-shopping-cart text-blue-400"></i> New Order</div>
+        <div onclick="switchTab('history'); toggleSidebar()" class="sidebar-item"><i class="fas fa-list text-purple-400"></i> My Orders</div>
+        <div onclick="openAddMoney(); toggleSidebar()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Deposit Funds</div>
         
         <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2 tracking-widest">Support Center</p>
         <div onclick="window.open('https://t.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram Support</div>
@@ -46,7 +46,7 @@
 
         <div id="adminSidebar" class="hidden mt-4 pt-4 border-t border-white/10">
             <p class="px-5 text-[9px] font-black text-red-500 uppercase mb-2">Master Admin</p>
-            <div onclick="switchTab('profile')" class="sidebar-item text-red-400"><i class="fas fa-database"></i> Admin Panel</div>
+            <div onclick="switchTab('profile'); toggleSidebar()" class="sidebar-item text-red-400"><i class="fas fa-database"></i> Admin Panel</div>
         </div>
         <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10 border-t border-white/5"><i class="fas fa-sign-out-alt"></i> Logout</div>
     </div>
@@ -66,9 +66,16 @@
         <div id="homeTab" class="tab-content p-4 space-y-4">
             <div class="glass p-5 space-y-4">
                 <h3 class="font-black text-blue-500 text-[10px] uppercase tracking-widest">New Order</h3>
-                <select id="catSelect" class="w-full p-4 neo-input text-xs font-bold outline-none"><option>🔍 Fetching API Services...</option></select>
+                <select id="catSelect" onchange="calcTotal()" class="w-full p-4 neo-input text-xs font-bold outline-none"><option>🔍 Fetching API Services...</option></select>
                 <input type="text" id="link" placeholder="Enter Link" class="w-full p-4 neo-input text-xs font-bold outline-none">
-                <input type="number" id="qty" placeholder="Quantity" class="p-4 neo-input text-xs font-bold outline-none w-full">
+                
+                <div class="flex gap-2">
+                    <input type="number" id="qty" oninput="calcTotal()" placeholder="Quantity" class="flex-1 p-4 neo-input text-xs font-bold outline-none">
+                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 flex items-center justify-center min-w-[100px]">
+                        <span id="autoPrice" class="text-green-400 font-mono font-bold text-xs">₹0.00</span>
+                    </div>
+                </div>
+                
                 <button onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-xs">Place Order</button>
             </div>
         </div>
@@ -148,6 +155,7 @@
     const ADMIN_UID = "cmEr126Ej8YuXZuPV4Pm88tR9Il2";
 
     let allSvcs = [];
+    let currentGlobalComm = 1.25;
 
     onAuthStateChanged(auth, async (user) => {
         document.getElementById('loadingScreen').classList.add('hidden');
@@ -166,19 +174,31 @@
             onValue(ref(db, 'users/' + user.uid + '/balance'), (s) => {
                 document.getElementById('headerBalance').innerText = "₹" + (s.val() || 0).toFixed(2);
             });
-            onValue(ref(db, 'settings/commission'), (s) => { document.getElementById('curCommText').innerText = s.val() || "1.25"; });
+            onValue(ref(db, 'settings/commission'), (s) => { 
+                currentGlobalComm = s.val() || 1.25;
+                document.getElementById('curCommText').innerText = currentGlobalComm; 
+            });
             
             fetchServices();
         } else { signInWithPopup(auth, provider); }
     });
 
-    // FIXED: Services Fetching
+    // AUTO PRICE CALCULATION LOGIC
+    window.calcTotal = () => {
+        const rate = parseFloat(document.getElementById('catSelect').value) || 0;
+        const q = parseInt(document.getElementById('qty').value) || 0;
+        // Calculation: (Rate * Commission / 1000) * Quantity
+        const total = (rate * currentGlobalComm / 1000) * q;
+        document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
+    };
+
     async function fetchServices() {
         try {
             const res = await fetch(`${BACKEND}/services`);
             allSvcs = await res.json();
             const select = document.getElementById('catSelect');
             select.innerHTML = allSvcs.map(s => `<option value="${s.rate}">${s.name} - ₹${s.rate}</option>`).join('');
+            calcTotal();
         } catch (e) { document.getElementById('catSelect').innerHTML = "<option>⚠️ Error Loading Services</option>"; }
     }
 
@@ -244,5 +264,4 @@
     window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
-                                                                                                                                                                        </html>
-                                                                                                                                                                        
+</html>
