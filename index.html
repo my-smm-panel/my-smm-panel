@@ -95,7 +95,7 @@
                 <div class="glass p-5 border-2 border-red-500/30">
                     <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center tracking-widest">Master Admin Dashboard</h3>
                     
-                    <div class="mb-4 p-3 bg-white/5 rounded-xl border border-white/5 text-center">  
+                    <div class="mb-4 p-3 bg-white/5 rounded-xl border border-white/10 text-center">  
                         <p class="text-[9px] opacity-50 mb-2 uppercase font-bold">Commission (Current: <span id="curCommText">...</span>)</p>  
                         <div class="flex gap-2">  
                             <input id="newCommInput" type="number" step="0.01" class="flex-1 p-2 bg-black border border-white/10 rounded-lg text-xs outline-none">  
@@ -185,17 +185,20 @@
             onValue(ref(db, 'settings/commission'), (s) => { 
                 currentGlobalComm = s.val() || 1.25;
                 document.getElementById('curCommText').innerText = currentGlobalComm; 
+                // Refresh list if services already loaded
+                if(allSvcs.length > 0) filterServices();
             });
             
             fetchServices();
         } else { signInWithPopup(auth, provider); }
     });
 
-    // AUTO PRICE CALCULATION LOGIC
+    // TOTAL PRICE CALCULATION
     window.calcTotal = () => {
         const rate = parseFloat(document.getElementById('serviceSelect').value) || 0;
         const q = parseInt(document.getElementById('qty').value) || 0;
-        const total = (rate * currentGlobalComm / 1000) * q;
+        // Calculation same as dropdown display
+        const total = (rate / 1000) * q;
         document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
     };
 
@@ -203,26 +206,24 @@
         try {
             const res = await fetch(`${BACKEND}/services`);
             allSvcs = await res.json();
-            
-            // Extract unique categories
             const categories = [...new Set(allSvcs.map(item => item.category))];
             const catSelect = document.getElementById('catSelect');
-            
             catSelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-            
-            // Trigger initial filter
             filterServices();
         } catch (e) { document.getElementById('catSelect').innerHTML = "<option>⚠️ Error Loading Services</option>"; }
     }
 
-    // FILTER SERVICES BY CATEGORY
+    // FIXED: Dropdown Displaying Price with Commission
     window.filterServices = () => {
         const selectedCat = document.getElementById('catSelect').value;
         const serviceSelect = document.getElementById('serviceSelect');
-        
         const filtered = allSvcs.filter(s => s.category === selectedCat);
         
-        serviceSelect.innerHTML = filtered.map(s => `<option value="${s.rate}">${s.name} - ₹${s.rate}</option>`).join('');
+        // Yahan commission add karke dropdown mein show kar rahe hain
+        serviceSelect.innerHTML = filtered.map(s => {
+            const finalRate = (s.rate * currentGlobalComm).toFixed(2);
+            return `<option value="${finalRate}">${s.name} - ₹${finalRate}</option>`;
+        }).join('');
         calcTotal();
     };
 
@@ -268,7 +269,11 @@
 
     window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await remove(ref(db, `payment_requests/${k}`)); alert("Success"); };
     window.rejectPay = async (k) => { if(confirm("Reject?")) await remove(ref(db, `payment_requests/${k}`)); };
-    window.updateComm = async () => { const v = parseFloat(document.getElementById('newCommInput').value); await set(ref(db, 'settings/commission'), v); alert("Saved"); };
+    window.updateComm = async () => { 
+        const v = parseFloat(document.getElementById('newCommInput').value); 
+        await set(ref(db, 'settings/commission'), v); 
+        alert("Saved"); 
+    };
     window.manualBalanceUpdate = async () => {
         const uid = document.getElementById('adminTargetUid').value;
         const amt = parseFloat(document.getElementById('adminEditBalAmt').value);
@@ -288,5 +293,5 @@
     window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
-    </html>
-    
+                    </html>
+                    
