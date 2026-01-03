@@ -66,7 +66,15 @@
         <div id="homeTab" class="tab-content p-4 space-y-4">
             <div class="glass p-5 space-y-4">
                 <h3 class="font-black text-blue-500 text-[10px] uppercase tracking-widest">New Order</h3>
-                <select id="catSelect" onchange="calcTotal()" class="w-full p-4 neo-input text-xs font-bold outline-none"><option>🔍 Fetching API Services...</option></select>
+                
+                <select id="catSelect" onchange="filterServices()" class="w-full p-4 neo-input text-xs font-bold outline-none">
+                    <option>🔍 Loading Categories...</option>
+                </select>
+
+                <select id="serviceSelect" onchange="calcTotal()" class="w-full p-4 neo-input text-xs font-bold outline-none">
+                    <option>Select Service</option>
+                </select>
+
                 <input type="text" id="link" placeholder="Enter Link" class="w-full p-4 neo-input text-xs font-bold outline-none">
                 
                 <div class="flex gap-2">
@@ -185,9 +193,8 @@
 
     // AUTO PRICE CALCULATION LOGIC
     window.calcTotal = () => {
-        const rate = parseFloat(document.getElementById('catSelect').value) || 0;
+        const rate = parseFloat(document.getElementById('serviceSelect').value) || 0;
         const q = parseInt(document.getElementById('qty').value) || 0;
-        // Calculation: (Rate * Commission / 1000) * Quantity
         const total = (rate * currentGlobalComm / 1000) * q;
         document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
     };
@@ -196,11 +203,28 @@
         try {
             const res = await fetch(`${BACKEND}/services`);
             allSvcs = await res.json();
-            const select = document.getElementById('catSelect');
-            select.innerHTML = allSvcs.map(s => `<option value="${s.rate}">${s.name} - ₹${s.rate}</option>`).join('');
-            calcTotal();
+            
+            // Extract unique categories
+            const categories = [...new Set(allSvcs.map(item => item.category))];
+            const catSelect = document.getElementById('catSelect');
+            
+            catSelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            // Trigger initial filter
+            filterServices();
         } catch (e) { document.getElementById('catSelect').innerHTML = "<option>⚠️ Error Loading Services</option>"; }
     }
+
+    // FILTER SERVICES BY CATEGORY
+    window.filterServices = () => {
+        const selectedCat = document.getElementById('catSelect').value;
+        const serviceSelect = document.getElementById('serviceSelect');
+        
+        const filtered = allSvcs.filter(s => s.category === selectedCat);
+        
+        serviceSelect.innerHTML = filtered.map(s => `<option value="${s.rate}">${s.name} - ₹${s.rate}</option>`).join('');
+        calcTotal();
+    };
 
     window.updateQR = () => {
         const amt = document.getElementById('payAmt').value;
@@ -237,7 +261,7 @@
         onValue(ref(db, 'users'), (snap) => {
             const list = document.getElementById('userList'); list.innerHTML = "";
             snap.forEach(child => {
-                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-500">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-400">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
             });
         });
     };
@@ -264,4 +288,5 @@
     window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
-</html>
+    </html>
+    
