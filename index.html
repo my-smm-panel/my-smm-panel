@@ -94,6 +94,7 @@
             <div id="adminPanel" class="hidden space-y-4">
                 <div class="glass p-5 border-2 border-red-500/30">
                     <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center tracking-widest">Master Admin Dashboard</h3>
+                    
                     <div class="mb-4 p-3 bg-white/5 rounded-xl border border-white/5 text-center">  
                         <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Global Commission: <span id="curCommText">...</span></p>
                         <div class="flex gap-2">
@@ -101,10 +102,12 @@
                             <button onclick="updateComm()" class="bg-blue-600 px-4 rounded-lg font-bold text-[10px]">SAVE</button>
                         </div>
                     </div>
+
                     <div id="adminPayList" class="space-y-2 mb-4"></div>
+
                     <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 text-center">
-                        <p class="text-[10px] text-white font-bold mb-3 uppercase tracking-widest">Direct Inject Balance</p>
-                        <input id="adminTargetUid" type="text" placeholder="UID" class="w-full p-3 neo-input text-[10px] mb-2 outline-none">
+                        <p class="text-[10px] text-white font-bold mb-3 uppercase tracking-widest">Inject Balance</p>
+                        <input id="adminTargetUid" type="text" placeholder="Target User UID" class="w-full p-3 neo-input text-[10px] mb-2 outline-none">
                         <div class="flex gap-2">
                             <input id="adminEditBalAmt" type="number" placeholder="Amt" class="flex-1 p-3 neo-input text-[10px] outline-none">
                             <button onclick="manualBalanceUpdate()" class="bg-green-600 px-4 rounded-xl font-black text-[10px] uppercase">Update</button>
@@ -144,7 +147,7 @@
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getDatabase, ref, onValue, update, increment, set, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    const firebaseConfig = {
+     const firebaseConfig = {
       apiKey: "AIzaSyCbOQZjrqbfr6r23MFNlDZavyB9AChK_XM",
       authDomain: "smspanel-76488.firebaseapp.com",
       databaseURL: "https://smspanel-76488-default-rtdb.firebaseio.com",
@@ -218,7 +221,7 @@
             const categories = [...new Set(allSvcs.map(item => item.category))];
             document.getElementById('catSelect').innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
             filterServices();
-        } catch (e) { console.error("API Error"); }
+        } catch (e) { document.getElementById('catSelect').innerHTML = "<option>⚠️ Error Loading Services</option>"; }
     }
 
     window.filterServices = () => {
@@ -231,6 +234,7 @@
         calcTotal();
     };
 
+    // FIXED PLACE ORDER LOGIC - (SMART BACKEND SYNC)
     window.placeOrder = async () => {
         const cost = calcTotal();
         const link = document.getElementById('orderLink').value;
@@ -246,18 +250,24 @@
         document.getElementById('buyBtn').disabled = true;
 
         try {
+            // Using No-Cache and improved fetch for Render spin-up
             const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: auth.currentUser.uid, service: serviceId, link: link, quantity: qty })
+                body: JSON.stringify({ uid: auth.currentUser.uid, service: serviceId, link: link, quantity: qty }),
+                cache: 'no-store'
             });
 
             if(res.ok) {
                 await update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
                 await push(ref(db, 'orders/' + auth.currentUser.uid), { serviceName, cost, quantity: qty, status: 'Pending', date: new Date().toLocaleString() });
-                alert("Order Placed!"); switchTab('history');
-            } else { alert("Server Error. Check Backend!"); }
-        } catch (e) { alert("Server Down. Try later."); }
+                alert("Order Placed Successfully!"); switchTab('history');
+            } else { 
+                const errData = await res.json().catch(() => ({}));
+                alert("Server Error: " + (errData.error || "Order failed on provider side.")); 
+            }
+        } catch (e) { alert("Backend is waking up. Please try again in 10 seconds."); }
+        
         document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
         document.getElementById('buyBtn').disabled = false;
     };
@@ -281,7 +291,7 @@
         onValue(ref(db, 'users'), (snap) => {
             const list = document.getElementById('userList'); list.innerHTML = "";
             snap.forEach(child => {
-                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-500">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-400">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
             });
         });
     };
@@ -315,4 +325,13 @@
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.getElementById(t + 'Tab').classList.remove('hidden');
         document.querySelectorAll('.nav-item').forEach(el => el.classList.replace('nav-active', 'text-slate-500'));
-        if(t === 'home') document.getElementById('navHome').classL
+        if(t === 'home') document.getElementById('navHome').classList.replace('text-slate-500', 'nav-active');
+        if(t === 'history') document.getElementById('navHistory').classList.replace('text-slate-500', 'nav-active');
+        if(t === 'profile') document.getElementById('navProfile').classList.replace('text-slate-500', 'nav-active');
+    };
+    window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };
+    window.openAddMoney = () => { document.getElementById('addMoneyModal').classList.remove('hidden'); toggleSidebar(); };
+    window.logoutUser = () => signOut(auth).then(() => location.reload());
+</script>
+</body>
+</html>
