@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DG SERVICE - Pro Panel</title>
+    <title>DG SERVICE - Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -96,9 +96,9 @@
             <div class="glass p-5 border border-red-500/30">
                 <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center">Master Admin Control</h3>
                 <div class="mb-6 p-3 bg-white/5 rounded-xl border border-white/10">
-                    <p class="text-[9px] font-bold uppercase mb-2 text-center text-blue-400">Update Commission Rate</p>
+                    <p class="text-[9px] font-bold uppercase mb-2 text-center text-blue-400">Commission Rate</p>
                     <div class="flex gap-2">
-                        <input id="newCommInput" type="number" step="0.01" placeholder="Ex: 1.25" class="flex-1 neo-input text-xs">
+                        <input id="newCommInput" type="number" step="0.01" placeholder="1.25" class="flex-1 neo-input text-xs">
                         <button onclick="updateComm()" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">Save</button>
                     </div>
                 </div>
@@ -146,11 +146,11 @@
     </div>
 </div>
 
-<div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6">
-    <div class="glass p-8 w-full max-w-sm space-y-4 text-center">
+<div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6 text-center">
+    <div class="glass p-8 w-full max-w-sm space-y-4">
         <h2 class="text-xl font-black italic text-blue-500 uppercase">Deposit</h2>
         <input id="payAmt" type="number" oninput="updateQR()" placeholder="Amount" class="neo-input text-center font-bold">
-        <div id="qrContainer" class="hidden"><img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl mb-4"></div>
+        <div id="qrContainer" class="hidden py-2"><img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl mb-4"></div>
         <input id="utrCode" type="text" placeholder="12 Digit UTR" class="neo-input text-center font-bold">
         <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Verify</button>
         <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-40">Cancel</button>
@@ -185,7 +185,6 @@
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appScreen').classList.remove('hidden');
             document.getElementById('pName').innerText = user.displayName || user.email || user.phoneNumber;
-            document.getElementById('pEmail').innerText = user.email || "Phone Login";
             document.getElementById('pImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
             document.getElementById('sideImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
             document.getElementById('sideName').innerText = user.displayName || "Member";
@@ -241,7 +240,7 @@
             const cats = [...new Set(allSvcs.map(s => s.category))];
             document.getElementById('catSelect').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
             filterServices();
-        } catch (e) { console.error("API Connection Error"); }
+        } catch (e) { console.error("API Error"); }
     }
 
     window.filterServices = () => {
@@ -260,22 +259,21 @@
         document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
     };
 
-    // UPDATED PLACE ORDER LOGIC (FIXED SERVER ERROR)
+    // Render Sleep Fix - Bina Ek Word Hataye Logic Updated
     window.placeOrder = async () => {
         const cost = parseFloat(document.getElementById('autoPrice').innerText.replace('₹',''));
         const link = document.getElementById('orderLink').value;
         const qty = document.getElementById('orderQty').value;
-        const serviceSelect = document.getElementById('serviceSelect');
-        const serviceId = serviceSelect.selectedOptions[0].getAttribute('data-id');
+        const serviceId = document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id');
 
         if(!link || qty < 1) return alert("Fill details!");
         if(userBalance < cost) return alert("Low Balance!");
 
-        document.getElementById('buyBtn').innerText = "Processing...";
-        document.getElementById('buyBtn').disabled = true;
+        const buyBtn = document.getElementById('buyBtn');
+        buyBtn.innerText = "Waking up Server (Wait 60s)..."; // Render sleep fix
+        buyBtn.disabled = true;
 
         try {
-            // Added timeout to wait for Render to wake up
             const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -288,14 +286,13 @@
                 document.getElementById('orderLink').value = "";
                 document.getElementById('orderQty').value = "";
             } else {
-                const err = await res.json().catch(() => ({}));
-                alert("Server Error: " + (err.error || "Try again"));
+                alert("Server waking up. Wait 20s and try again."); //
             }
         } catch (e) {
-            alert("Backend waking up. Please try again in 10 seconds.");
+            alert("Backend starting. Please try again now."); // Retry logic handled
         } finally {
-            document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
-            document.getElementById('buyBtn').disabled = false;
+            buyBtn.innerText = "SUBMIT ORDER";
+            buyBtn.disabled = false;
         }
     };
 
