@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DG SERVICE - Master Control</title>
+    <title>DG SERVICE - Pro Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,7 +11,7 @@
         #mainContainer { height: calc(100vh - 128px); overflow-y: auto; }
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .neo-input { background: #0a0f1d; border: 1px solid #1e293b; color: white; border-radius: 12px; padding: 12px; width: 100%; outline: none; }
-        #sidebar { transition: 0.3s; transform: translateX(-100%); z-index: 1000; }
+        #sidebar { transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); z-index: 1000; }
         #sidebar.open { transform: translateX(0); }
         .sidebar-item { padding: 14px 20px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
         .nav-active { color: #3b82f6 !important; }
@@ -23,111 +23,142 @@
 
 <div id="loadingScreen" class="fixed inset-0 bg-[#020617] z-[99999] flex flex-col items-center justify-center">
     <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mb-4"></div>
-    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Initializing DG SERVICE...</p>
+    <p class="text-xs font-bold text-gray-400 uppercase">System Initializing...</p>
 </div>
 
 <div id="authScreen" class="hidden fixed inset-0 bg-[#020617] z-[50000] overflow-y-auto p-6">
-    <div class="max-w-md mx-auto space-y-6 pt-10">
-        <div class="text-center">
-            <h1 class="text-4xl font-black italic text-blue-500 uppercase tracking-tighter">DG SERVICE</h1>
-            <p class="text-gray-400 text-[10px] mt-2 uppercase font-bold tracking-widest">Login or Create Account</p>
-        </div>
-
-        <div class="glass p-6 space-y-4">
-            <input type="email" id="authEmail" placeholder="Email Address" class="neo-input text-xs font-bold">
-            <input type="password" id="authPass" placeholder="Password" class="neo-input text-xs font-bold">
-            <div class="grid grid-cols-2 gap-3">
+    <div class="max-w-md mx-auto space-y-6 pt-10 pb-10">
+        <h1 class="text-4xl font-black italic text-blue-500 uppercase text-center">DG SERVICE</h1>
+        
+        <div class="glass p-6 space-y-4 text-center">
+            <p class="text-[10px] text-gray-400 font-black uppercase">Email Authentication</p>
+            <input type="email" id="authEmail" placeholder="Email Address" class="neo-input text-xs">
+            <input type="password" id="authPass" placeholder="Password" class="neo-input text-xs">
+            <div class="grid grid-cols-2 gap-2">
                 <button onclick="handleEmailAuth('login')" class="bg-blue-600 py-3 rounded-xl font-black text-[10px] uppercase">Login</button>
                 <button onclick="handleEmailAuth('signup')" class="bg-slate-800 py-3 rounded-xl font-black text-[10px] uppercase border border-white/10">Sign Up</button>
             </div>
         </div>
 
-        <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-xl font-black flex items-center justify-center gap-2 text-[10px] uppercase">
-            <img src="https://www.google.com/favicon.ico" class="w-4"> Continue with Google
-        </button>
+        <div class="flex items-center gap-4 py-2 opacity-30">
+            <div class="h-[1px] bg-white flex-1"></div>
+            <span class="text-[10px] font-black uppercase">OR</span>
+            <div class="h-[1px] bg-white flex-1"></div>
+        </div>
 
-        <div class="glass p-6 space-y-4">
-            <p class="text-center text-[10px] font-black text-gray-400 uppercase">Phone Login</p>
+        <div class="glass p-6 space-y-4 text-center">
+            <p class="text-[10px] text-gray-400 font-black uppercase">Phone OTP Login</p>
             <div id="recaptcha-container"></div>
             <div class="flex gap-2">
-                <input type="tel" id="phoneNumber" placeholder="+91 0000000000" class="neo-input text-xs font-bold flex-1">
+                <input type="tel" id="phoneNumber" placeholder="+91XXXXXXXXXX" class="neo-input text-xs flex-1">
                 <button onclick="handlePhoneAuth()" id="sendCodeBtn" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">OTP</button>
             </div>
             <div id="otpSection" class="hidden flex gap-2">
-                <input type="number" id="verificationCode" placeholder="OTP Code" class="neo-input text-xs font-bold flex-1">
+                <input type="number" id="verificationCode" placeholder="Enter OTP" class="neo-input text-xs flex-1">
                 <button onclick="verifyOtpCode()" class="bg-green-600 px-4 rounded-xl font-black text-[10px] uppercase">Verify</button>
             </div>
         </div>
+
+        <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 shadow-xl">
+            <img src="https://www.google.com/favicon.ico" class="w-4"> Continue with Google
+        </button>
     </div>
 </div>
 
 <div id="appScreen" class="hidden h-full flex flex-col">
-    <header class="bg-slate-900/80 backdrop-blur-md px-4 py-3 flex justify-between items-center border-b border-white/5 z-50">
-        <button onclick="toggleSidebar()" class="text-white text-lg"><i class="fas fa-bars"></i></button>
-        <h1 class="font-black text-white text-lg italic tracking-tighter uppercase">DG SERVICE</h1>
-        <div class="bg-blue-600/10 px-4 py-1 rounded-full border border-blue-500/20 text-green-400 font-bold" id="headerBalance">₹0.00</div>
+    <header class="bg-slate-900/80 p-4 flex justify-between items-center border-b border-white/5 sticky top-0 z-50">
+        <button onclick="toggleSidebar()"><i class="fas fa-bars text-xl"></i></button>
+        <h1 class="font-black italic text-blue-500 uppercase">DG SERVICE</h1>
+        <div class="bg-blue-600/10 px-4 py-1 rounded-full text-green-400 font-bold" id="headerBalance">₹0.00</div>
     </header>
 
-    <div id="mainContainer" class="w-full pb-20 p-4">
+    <main id="mainContainer" class="p-4">
         <div id="homeTab" class="tab-content active space-y-4">
             <div class="glass p-5 space-y-4">
+                <h3 class="text-[10px] font-black text-blue-500 uppercase">New Order</h3>
                 <select id="catSelect" onchange="filterServices()" class="neo-input text-xs font-bold"></select>
                 <select id="serviceSelect" onchange="calcTotal()" class="neo-input text-xs font-bold"></select>
-                <input type="text" id="orderLink" placeholder="Paste Link Here" class="neo-input text-xs font-bold">
+                <input type="text" id="orderLink" placeholder="Link" class="neo-input text-xs font-bold">
                 <div class="flex gap-2">
                     <input type="number" id="orderQty" oninput="calcTotal()" placeholder="Quantity" class="flex-1 neo-input text-xs font-bold">
                     <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 flex items-center justify-center min-w-[100px] text-green-400 font-bold text-xs" id="autoPrice">₹0.00</div>
                 </div>
                 <button id="buyBtn" onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-xs">SUBMIT ORDER</button>
             </div>
+
+            <div class="glass p-4 flex gap-2">
+                <input type="text" id="promoInput" placeholder="PROMO CODE" class="flex-1 neo-input text-[10px] font-bold">
+                <button onclick="redeemPromo()" class="bg-green-600 px-4 rounded-xl font-black text-[10px] uppercase">Redeem</button>
+            </div>
         </div>
-        
+
         <div id="historyTab" class="tab-content"><div id="orderHistoryList" class="space-y-3"></div></div>
+
+        <div id="profileTab" class="tab-content text-center space-y-6">
+            <div class="glass p-6">
+                <img id="pImg" class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-blue-500" src="">
+                <h3 id="pName" class="font-black text-lg">User</h3>
+                <p id="pEmail" class="text-xs opacity-50 mb-4">Account Connected</p>
+                <button onclick="logoutUser()" class="w-full text-red-500 font-black border border-red-500/20 py-4 rounded-xl uppercase text-xs">Logout Account</button>
+            </div>
+        </div>
 
         <div id="adminPanel" class="tab-content space-y-4">
             <div class="glass p-5 border border-red-500/30">
-                <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 tracking-widest">Master Admin</h3>
-                <div id="adminPayList" class="space-y-2 mb-4"></div>
-                <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
-                <div class="mt-4 p-3 bg-white/5 rounded-xl border border-white/5">
-                    <p class="text-[9px] opacity-50 uppercase mb-2">Update User Balance (UID Required)</p>
-                    <input id="adminTargetUid" type="text" placeholder="User UID" class="neo-input text-[10px] mb-2">
+                <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center">Master Admin Control</h3>
+                <div class="mb-6 p-3 bg-white/5 rounded-xl">
+                    <p class="text-[9px] font-bold uppercase mb-2">Create Promo Code</p>
                     <div class="flex gap-2">
-                        <input id="adminEditBalAmt" type="number" placeholder="Amount" class="flex-1 neo-input text-xs">
-                        <button onclick="manualBalanceUpdate()" class="bg-green-600 px-4 rounded-lg text-[10px] font-bold">UPDATE</button>
+                        <input id="newPromoCode" type="text" placeholder="CODE" class="flex-1 neo-input text-xs uppercase">
+                        <button onclick="generatePromo()" class="bg-green-600 px-4 rounded-lg text-[10px] font-bold">GENERATE</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div id="apiManagerTab" class="tab-content space-y-4">
-            <div class="glass p-5">
-                <h3 class="text-blue-500 font-black text-[10px] uppercase mb-4">API Manager</h3>
-                <input id="newApiUrl" type="text" placeholder="API Base URL" class="neo-input text-xs mb-2">
-                <input id="newApiKey" type="password" placeholder="API Key" class="neo-input text-xs mb-2">
-                <button onclick="saveApiSettings()" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-xs uppercase">Save API Settings</button>
-            </div>
-        </div>
-
-        <div id="supportTab" class="tab-content space-y-4">
-            <div class="glass p-5">
-                <h3 class="text-green-500 font-black text-[10px] uppercase mb-4">Support Editor</h3>
-                <div class="space-y-3">
-                    <input id="supTele" type="text" placeholder="Telegram Link" class="neo-input text-xs">
-                    <input id="supWa" type="text" placeholder="WhatsApp Number" class="neo-input text-xs">
-                    <button onclick="saveSupportLinks()" class="w-full bg-green-600 py-3 rounded-xl font-bold text-xs uppercase">Update Support</button>
+                <div id="adminPayList" class="space-y-2 mb-4"></div>
+                <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
+                <div class="mt-4 p-3 bg-white/5 rounded-xl">
+                    <input id="adminTargetUid" type="text" placeholder="UID" class="neo-input text-[10px] mb-2">
+                    <input id="adminEditBalAmt" type="number" placeholder="Amt" class="neo-input text-xs mb-2">
+                    <button onclick="manualBalanceUpdate()" class="w-full bg-blue-600 py-2 rounded-xl text-[10px] font-bold uppercase">Update Balance</button>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <nav class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-50" id="bottomNav"></nav>
+    <nav class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-50">
+        <button onclick="switchTab('homeTab')" class="nav-item nav-active flex flex-col items-center w-full"><i class="fas fa-home"></i></button>
+        <button onclick="switchTab('historyTab')" class="nav-item text-slate-500 flex flex-col items-center w-full"><i class="fas fa-list"></i></button>
+        <button onclick="switchTab('profileTab')" class="nav-item text-slate-500 flex flex-col items-center w-full"><i class="fas fa-user"></i></button>
+    </nav>
 </div>
 
 <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 z-[900]"></div>
-<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 z-[1000]">
-    <div class="p-6 border-b border-white/5"><p id="sideName" class="font-black text-sm truncate">Loading...</p></div>
-    <div id="sidebarMenu" class="flex flex-col py-2"></div>
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 overflow-y-auto">
+    <div class="p-6 border-b border-white/5 flex items-center gap-3">
+        <img id="sideImg" class="w-12 h-12 rounded-full border-2 border-blue-500" src="">
+        <p id="sideName" class="font-black text-sm truncate">User</p>
+    </div>
+    <div class="flex flex-col py-2">
+        <div onclick="switchTab('homeTab'); toggleSidebar()" class="sidebar-item"><i class="fas fa-shopping-cart text-blue-400"></i> New Order</div>
+        <div onclick="openAddMoney(); toggleSidebar()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Add Funds</div>
+        <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2">Support</p>
+        <div onclick="window.open('https://t.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram</div>
+        <div onclick="window.open('https://wa.me/917775965170')" class="sidebar-item"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</div>
+        <div id="adminSidebarBtn" class="hidden border-t border-white/10 mt-4 pt-4">
+            <div onclick="switchTab('adminPanel'); toggleSidebar()" class="sidebar-item text-red-400 font-bold"><i class="fas fa-shield-alt"></i> MASTER ADMIN</div>
+        </div>
+        <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    </div>
+</div>
+
+<div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6">
+    <div class="glass p-8 w-full max-w-sm space-y-4 text-center">
+        <h2 class="text-xl font-black italic text-blue-500">DEPOSIT FUNDS</h2>
+        <input id="payAmt" type="number" oninput="updateQR()" placeholder="Amount" class="neo-input text-center font-bold">
+        <div id="qrContainer" class="hidden"><img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl mb-4"></div>
+        <input id="utrCode" type="text" placeholder="UTR Number" class="neo-input text-center font-bold">
+        <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase shadow-lg">Verify Payment</button>
+        <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-40">Cancel</button>
+    </div>
 </div>
 
 <script type="module">
@@ -147,102 +178,88 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
-    const BACKEND_URL = "https://dg-backend-jhqa.onrender.com"; 
+    const BACKEND = "https://dg-backend-jhqa.onrender.com"; 
     const ADMIN_UID = "cmEr126Ej8YuXZuPV4Pm88tR9Il2";
-    let confirmationResult, userBalance = 0, currentGlobalComm = 1.25, allSvcs = [], apiSettings = {};
 
-    onAuthStateChanged(auth, (user) => {
+    let allSvcs = [], currentGlobalComm = 1.25, userBalance = 0, isPromoActive = false, confirmationResult = null;
+
+    onAuthStateChanged(auth, async (user) => {
         document.getElementById('loadingScreen').classList.add('hidden');
-        if(user) {
+        if (user) {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appScreen').classList.remove('hidden');
-            document.getElementById('sideName').innerText = user.email || user.phoneNumber || "User";
-            
-            const isAdmin = user.uid === ADMIN_UID;
-            isAdmin ? setupAdminUI() : setupUserUI();
+            document.getElementById('pName').innerText = user.displayName || user.email || user.phoneNumber;
+            document.getElementById('pImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
+            document.getElementById('sideName').innerText = user.displayName || "Member";
+
+            if(user.uid === ADMIN_UID) {
+                document.getElementById('adminSidebarBtn').classList.remove('hidden');
+                loadAdminData();
+            }
 
             onValue(ref(db, 'users/' + user.uid), (s) => {
-                userBalance = s.val() ? s.val().balance : 0;
+                const data = s.val();
+                userBalance = data ? data.balance : 0;
                 document.getElementById('headerBalance').innerText = "₹" + userBalance.toFixed(2);
-                if(!s.val()) set(ref(db, 'users/' + user.uid), { balance: 0, email: user.email || "none", phone: user.phoneNumber || "none" });
+                if(data && data.promoExpiry && new Date().getTime() < data.promoExpiry) isPromoActive = true;
+                else isPromoActive = false;
+                if(allSvcs.length > 0) filterServices();
+                if(!data) set(ref(db, 'users/' + user.uid), { balance: 0, email: user.email || "none", phone: user.phoneNumber || "none" });
             });
-            
-            onValue(ref(db, 'settings/api'), (s) => { apiSettings = s.val() || {}; fetchServices(); });
-            onValue(ref(db, 'settings/commission'), (s) => { currentGlobalComm = s.val() || 1.25; });
+            fetchServices();
         } else {
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('appScreen').classList.add('hidden');
         }
     });
 
-    // WORKABLE API & SUPPORT EDITOR
-    window.saveApiSettings = () => {
-        const url = document.getElementById('newApiUrl').value;
-        const key = document.getElementById('newApiKey').value;
-        set(ref(db, 'settings/api'), { url, key }).then(() => alert("API Updated!"));
-    };
-
-    window.saveSupportLinks = () => {
-        const telegram = document.getElementById('supTele').value;
-        const whatsapp = document.getElementById('supWa').value;
-        set(ref(db, 'settings/support'), { telegram, whatsapp }).then(() => alert("Support Updated!"));
-    };
-
-    // AUTH HANDLERS
+    // --- AUTH LOGIC ---
     window.handleGoogle = () => signInWithPopup(auth, provider);
-    window.handleEmailAuth = (type) => {
+    
+    window.handleEmailAuth = async (type) => {
         const e = document.getElementById('authEmail').value, p = document.getElementById('authPass').value;
-        type === 'login' ? signInWithEmailAndPassword(auth, e, p) : createUserWithEmailAndPassword(auth, e, p);
-    };
-    window.handlePhoneAuth = () => {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {size: 'invisible'});
-        signInWithPhoneNumber(auth, document.getElementById('phoneNumber').value, window.recaptchaVerifier)
-        .then(res => { confirmationResult = res; document.getElementById('otpSection').classList.remove('hidden'); });
-    };
-    window.verifyOtpCode = () => confirmationResult.confirm(document.getElementById('verificationCode').value);
-
-    // DYNAMIC UI SETUP
-    function setupAdminUI() {
-        document.getElementById('sidebarMenu').innerHTML = `
-            <div onclick="switchTab('adminPanel')" class="sidebar-item text-red-400 font-bold"><i class="fas fa-shield-alt"></i> Admin Panel</div>
-            <div onclick="switchTab('apiManagerTab')" class="sidebar-item"><i class="fas fa-plug"></i> API Manager</div>
-            <div onclick="switchTab('supportTab')" class="sidebar-item"><i class="fas fa-headset"></i> Support Editor</div>
-            <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Logout</div>
-        `;
-        document.getElementById('bottomNav').innerHTML = `
-            <button onclick="switchTab('adminPanel')" class="flex flex-col items-center"><i class="fas fa-user-shield"></i></button>
-            <button onclick="switchTab('apiManagerTab')" class="flex flex-col items-center"><i class="fas fa-cog"></i></button>
-        `;
-        loadAdminData();
-    }
-
-    function setupUserUI() {
-        document.getElementById('sidebarMenu').innerHTML = `
-            <div onclick="switchTab('homeTab')" class="sidebar-item"><i class="fas fa-shopping-cart"></i> New Order</div>
-            <div onclick="switchTab('historyTab')" class="sidebar-item"><i class="fas fa-history"></i> My Orders</div>
-            <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Logout</div>
-        `;
-        document.getElementById('bottomNav').innerHTML = `
-            <button onclick="switchTab('homeTab')" class="flex flex-col items-center"><i class="fas fa-home"></i></button>
-            <button onclick="switchTab('historyTab')" class="flex flex-col items-center"><i class="fas fa-list"></i></button>
-        `;
-    }
-
-    // FETCH & ORDER LOGIC
-    async function fetchServices() {
-        if(!apiSettings.url) return;
+        if(!e || !p) return alert("Enter details");
         try {
-            const res = await fetch(`${apiSettings.url}/services`);
+            if(type === 'login') await signInWithEmailAndPassword(auth, e, p);
+            else await createUserWithEmailAndPassword(auth, e, p);
+        } catch(err) { alert(err.message); }
+    };
+
+    window.handlePhoneAuth = async () => {
+        const phone = document.getElementById('phoneNumber').value;
+        if(phone.length < 10) return alert("Enter valid phone with +91");
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {size: 'invisible'});
+        try {
+            confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+            document.getElementById('otpSection').classList.remove('hidden');
+            alert("OTP Sent!");
+        } catch(err) { alert(err.message); }
+    };
+
+    window.verifyOtpCode = async () => {
+        const code = document.getElementById('verificationCode').value;
+        try { await confirmationResult.confirm(code); } catch(err) { alert("Invalid OTP"); }
+    };
+
+    // --- ALL OLD LOGIC (PROMO, SERVICES, ADMIN) ---
+    async function fetchServices() {
+        try {
+            const res = await fetch(`${BACKEND}/services`);
             allSvcs = await res.json();
-            const cats = [...new Set(allSvcs.map(s => s.category))];
-            document.getElementById('catSelect').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            const categories = [...new Set(allSvcs.map(item => item.category))];
+            document.getElementById('catSelect').innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
             filterServices();
-        } catch(e) { console.error("API Error"); }
+        } catch (e) { console.error("API Error"); }
     }
 
     window.filterServices = () => {
-        const filtered = allSvcs.filter(s => s.category === document.getElementById('catSelect').value);
-        document.getElementById('serviceSelect').innerHTML = filtered.map(s => `<option value="${(s.rate * currentGlobalComm).toFixed(2)}" data-id="${s.service}">${s.name}</option>`).join('');
+        const selectedCat = document.getElementById('catSelect').value;
+        const filtered = allSvcs.filter(s => s.category === selectedCat);
+        document.getElementById('serviceSelect').innerHTML = filtered.map(s => {
+            let rate = s.rate * currentGlobalComm;
+            if(isPromoActive) rate = rate * 0.95; 
+            return `<option value="${rate.toFixed(2)}" data-id="${s.service}">${s.name} - ₹${rate.toFixed(2)}</option>`;
+        }).join('');
         calcTotal();
     };
 
@@ -254,9 +271,8 @@
     window.placeOrder = async () => {
         const cost = parseFloat(document.getElementById('autoPrice').innerText.replace('₹',''));
         if(userBalance < cost) return alert("Low Balance!");
-        document.getElementById('buyBtn').innerText = "Processing...";
         try {
-            const res = await fetch(`${apiSettings.url}/buy`, {
+            const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uid: auth.currentUser.uid, service: document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id'), link: document.getElementById('orderLink').value, quantity: document.getElementById('orderQty').value })
@@ -264,32 +280,71 @@
             if(res.ok) {
                 update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
                 alert("Order Placed!");
-            } else { alert("Server Error. Try again."); }
-        } catch(e) { alert("Error connecting to server."); }
-        document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
+            }
+        } catch(e) { alert("Server Error"); }
     };
 
-    // ADMIN DATA HELPERS
+    window.redeemPromo = () => {
+        const code = document.getElementById('promoInput').value.toUpperCase();
+        onValue(ref(db, 'promos/' + code), (s) => {
+            if(s.val()) {
+                const expiry = new Date().getTime() + (24 * 60 * 60 * 1000);
+                update(ref(db, 'users/' + auth.currentUser.uid), { promoExpiry: expiry });
+                alert("Applied!");
+            } else alert("Invalid Code");
+        }, { onlyOnce: true });
+    };
+
+    window.manualBalanceUpdate = () => {
+        update(ref(db, `users/${document.getElementById('adminTargetUid').value}`), { balance: increment(parseFloat(document.getElementById('adminEditBalAmt').value)) });
+        alert("Updated");
+    };
+
     window.loadAdminData = () => {
+        onValue(ref(db, 'payment_requests'), (snap) => {
+            const list = document.getElementById('adminPayList'); list.innerHTML = "";
+            snap.forEach(c => {
+                if(c.val().status === 'Pending') {
+                    list.innerHTML += `<div class="bg-blue-600/10 p-3 rounded-xl flex justify-between items-center text-[10px] mb-2">
+                        <div>₹${c.val().amount} • ${c.val().utr}</div>
+                        <div class="flex gap-1">
+                            <button onclick="approvePay('${c.key}','${c.val().userId}',${c.val().amount})" class="bg-green-600 px-3 py-1 rounded">OK</button>
+                            <button onclick="rejectPay('${c.key}')" class="bg-red-600 px-3 py-1 rounded">X</button>
+                        </div>
+                    </div>`;
+                }
+            });
+        });
         onValue(ref(db, 'users'), (snap) => {
             const list = document.getElementById('userList'); list.innerHTML = "";
             snap.forEach(c => {
-                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${c.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${c.val().email}</span><span class="text-green-500">₹${(c.val().balance||0).toFixed(2)}</span></div>`;
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${c.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${c.val().email || c.val().phone}</span><span class="text-green-500">₹${(c.val().balance||0).toFixed(2)}</span></div>`;
             });
         });
     };
 
-    window.manualBalanceUpdate = () => {
-        const uid = document.getElementById('adminTargetUid').value, amt = parseFloat(document.getElementById('adminEditBalAmt').value);
-        update(ref(db, `users/${uid}`), { balance: increment(amt) }).then(() => alert("Updated!"));
+    window.generatePromo = () => set(ref(db, 'promos/' + document.getElementById('newPromoCode').value.toUpperCase()), true);
+    window.updateQR = () => {
+        const amt = document.getElementById('payAmt').value;
+        if(amt > 0) {
+            document.getElementById('qrContainer').classList.remove('hidden');
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7775965170@naviaxis&pn=DG-SERVICE&am=${amt}&cu=INR`;
+        }
     };
-
+    window.submitUTR = async () => {
+        await push(ref(db, 'payment_requests'), { userId: auth.currentUser.uid, email: auth.currentUser.email || auth.currentUser.phoneNumber, utr: document.getElementById('utrCode').value, amount: parseFloat(document.getElementById('payAmt').value), status: 'Pending' });
+        alert("Sent!"); document.getElementById('addMoneyModal').classList.add('hidden');
+    };
     window.switchTab = (id) => {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        toggleSidebar();
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.replace('nav-active', 'text-slate-500'));
+        event.currentTarget.classList.replace('text-slate-500', 'nav-active');
     };
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };
+    window.openAddMoney = () => document.getElementById('addMoneyModal').classList.remove('hidden');
+    window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await remove(ref(db, `payment_requests/${k}`)); };
+    window.rejectPay = async (k) => { await remove(ref(db, `payment_requests/${k}`)); };
     window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
