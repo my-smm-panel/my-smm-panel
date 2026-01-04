@@ -15,23 +15,50 @@
         #sidebar.open { transform: translateX(0); }
         .sidebar-item { padding: 14px 20px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
         .nav-active { color: #3b82f6 !important; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
 
 <div id="loadingScreen" class="fixed inset-0 bg-[#020617] z-[99999] flex flex-col items-center justify-center">
     <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mb-4"></div>
-    <p class="text-xs font-bold text-gray-400 uppercase">System Initializing...</p>
+    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Initializing DG SERVICE...</p>
 </div>
 
-<div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 z-[900]"></div>
-<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 overflow-y-auto shadow-2xl">
-    <div class="p-6 border-b border-white/5 flex items-center gap-3">
-        <img id="sideImg" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-lg" src="">
-        <div><p id="sideName" class="text-sm font-black truncate w-32">User</p></div>
-    </div>
-    <div class="flex flex-col py-2" id="sidebarMenu">
+<div id="authScreen" class="hidden fixed inset-0 bg-[#020617] z-[50000] overflow-y-auto p-6">
+    <div class="max-w-md mx-auto space-y-6 pt-10">
+        <div class="text-center">
+            <h1 class="text-4xl font-black italic text-blue-500 uppercase tracking-tighter">DG SERVICE</h1>
+            <p class="text-gray-400 text-[10px] mt-2 uppercase font-bold tracking-widest">Login or Create Account</p>
         </div>
+
+        <div class="glass p-6 space-y-4">
+            <input type="email" id="authEmail" placeholder="Email Address" class="neo-input text-xs font-bold">
+            <input type="password" id="authPass" placeholder="Password" class="neo-input text-xs font-bold">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="handleEmailAuth('login')" class="bg-blue-600 py-3 rounded-xl font-black text-[10px] uppercase">Login</button>
+                <button onclick="handleEmailAuth('signup')" class="bg-slate-800 py-3 rounded-xl font-black text-[10px] uppercase border border-white/10">Sign Up</button>
+            </div>
+        </div>
+
+        <button onclick="handleGoogle()" class="w-full bg-white text-black py-4 rounded-xl font-black flex items-center justify-center gap-2 text-[10px] uppercase">
+            <img src="https://www.google.com/favicon.ico" class="w-4"> Continue with Google
+        </button>
+
+        <div class="glass p-6 space-y-4">
+            <p class="text-center text-[10px] font-black text-gray-400 uppercase">Phone Login</p>
+            <div id="recaptcha-container"></div>
+            <div class="flex gap-2">
+                <input type="tel" id="phoneNumber" placeholder="+91 0000000000" class="neo-input text-xs font-bold flex-1">
+                <button onclick="handlePhoneAuth()" id="sendCodeBtn" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">OTP</button>
+            </div>
+            <div id="otpSection" class="hidden flex gap-2">
+                <input type="number" id="verificationCode" placeholder="OTP Code" class="neo-input text-xs font-bold flex-1">
+                <button onclick="verifyOtpCode()" class="bg-green-600 px-4 rounded-xl font-black text-[10px] uppercase">Verify</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="appScreen" class="hidden h-full flex flex-col">
@@ -42,58 +69,65 @@
     </header>
 
     <div id="mainContainer" class="w-full pb-20 p-4">
-        <div id="userPanel" class="hidden space-y-4">
-            <div id="homeTab" class="tab-content glass p-5 space-y-4">
-                <h3 class="font-black text-blue-500 text-[10px] uppercase">New Order</h3>
+        <div id="homeTab" class="tab-content active space-y-4">
+            <div class="glass p-5 space-y-4">
                 <select id="catSelect" onchange="filterServices()" class="neo-input text-xs font-bold"></select>
                 <select id="serviceSelect" onchange="calcTotal()" class="neo-input text-xs font-bold"></select>
-                <input type="text" id="orderLink" placeholder="Post Link" class="neo-input text-xs font-bold">
+                <input type="text" id="orderLink" placeholder="Paste Link Here" class="neo-input text-xs font-bold">
                 <div class="flex gap-2">
                     <input type="number" id="orderQty" oninput="calcTotal()" placeholder="Quantity" class="flex-1 neo-input text-xs font-bold">
-                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 flex items-center justify-center min-w-[100px]"><span id="autoPrice" class="text-green-400 font-bold text-xs">₹0.00</span></div>
+                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 flex items-center justify-center min-w-[100px] text-green-400 font-bold text-xs" id="autoPrice">₹0.00</div>
                 </div>
-                <button id="buyBtn" onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-xs shadow-lg">SUBMIT ORDER</button>
+                <button id="buyBtn" onclick="placeOrder()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-xs">SUBMIT ORDER</button>
             </div>
-            <div id="historyTab" class="tab-content hidden"><div id="orderHistoryList" class="space-y-3"></div></div>
+        </div>
+        
+        <div id="historyTab" class="tab-content"><div id="orderHistoryList" class="space-y-3"></div></div>
+
+        <div id="adminPanel" class="tab-content space-y-4">
+            <div class="glass p-5 border border-red-500/30">
+                <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 tracking-widest">Master Admin</h3>
+                <div id="adminPayList" class="space-y-2 mb-4"></div>
+                <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
+                <div class="mt-4 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <p class="text-[9px] opacity-50 uppercase mb-2">Update User Balance (UID Required)</p>
+                    <input id="adminTargetUid" type="text" placeholder="User UID" class="neo-input text-[10px] mb-2">
+                    <div class="flex gap-2">
+                        <input id="adminEditBalAmt" type="number" placeholder="Amount" class="flex-1 neo-input text-xs">
+                        <button onclick="manualBalanceUpdate()" class="bg-green-600 px-4 rounded-lg text-[10px] font-bold">UPDATE</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div id="adminPanel" class="hidden space-y-6">
-            <div class="glass p-5 border-2 border-red-500/20">
-                <h2 class="text-red-500 font-black text-xs uppercase mb-4 text-center tracking-widest">Master Admin Console</h2>
-                
-                <div class="mb-6 space-y-3">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">User Balance & Data</p>
-                    <input id="adminTargetUid" type="text" placeholder="User UID" class="neo-input text-[10px]">
-                    <div class="flex gap-2">
-                        <input id="adminEditBalAmt" type="number" placeholder="Amt (+/-)" class="flex-1 neo-input text-xs">
-                        <button onclick="manualBalanceUpdate()" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">Update</button>
-                    </div>
-                    <div id="userList" class="max-h-40 overflow-y-auto space-y-2 text-[10px]"></div>
-                </div>
+        <div id="apiManagerTab" class="tab-content space-y-4">
+            <div class="glass p-5">
+                <h3 class="text-blue-500 font-black text-[10px] uppercase mb-4">API Manager</h3>
+                <input id="newApiUrl" type="text" placeholder="API Base URL" class="neo-input text-xs mb-2">
+                <input id="newApiKey" type="password" placeholder="API Key" class="neo-input text-xs mb-2">
+                <button onclick="saveApiSettings()" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-xs uppercase">Save API Settings</button>
+            </div>
+        </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-white/5 p-3 rounded-xl">
-                        <p class="text-[8px] opacity-50 uppercase">Commission</p>
-                        <input id="newCommInput" type="number" step="0.01" class="neo-input text-xs mt-1" placeholder="1.25">
-                        <button onclick="updateComm()" class="w-full bg-green-600 mt-2 py-1 rounded text-[10px] font-bold">SAVE</button>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl">
-                        <p class="text-[8px] opacity-50 uppercase">UPI Gateway</p>
-                        <input id="upiInput" type="text" class="neo-input text-xs mt-1" placeholder="upi@id">
-                        <button onclick="updateSettings('upi')" class="w-full bg-green-600 mt-2 py-1 rounded text-[10px] font-bold">SET</button>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <p class="text-[10px] font-bold text-purple-400 uppercase">Payment Verification</p>
-                    <div id="adminPayList" class="space-y-2"></div>
+        <div id="supportTab" class="tab-content space-y-4">
+            <div class="glass p-5">
+                <h3 class="text-green-500 font-black text-[10px] uppercase mb-4">Support Editor</h3>
+                <div class="space-y-3">
+                    <input id="supTele" type="text" placeholder="Telegram Link" class="neo-input text-xs">
+                    <input id="supWa" type="text" placeholder="WhatsApp Number" class="neo-input text-xs">
+                    <button onclick="saveSupportLinks()" class="w-full bg-green-600 py-3 rounded-xl font-bold text-xs uppercase">Update Support</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <nav class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-50" id="bottomNav">
-        </nav>
+    <nav class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-50" id="bottomNav"></nav>
+</div>
+
+<div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 z-[900]"></div>
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#0a0f1d] border-r border-white/5 z-[1000]">
+    <div class="p-6 border-b border-white/5"><p id="sideName" class="font-black text-sm truncate">Loading...</p></div>
+    <div id="sidebarMenu" class="flex flex-col py-2"></div>
 </div>
 
 <script type="module">
@@ -113,130 +147,150 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
-    const BACKEND = "https://dg-backend-jhqa.onrender.com"; 
+    const BACKEND_URL = "https://dg-backend-jhqa.onrender.com"; 
     const ADMIN_UID = "cmEr126Ej8YuXZuPV4Pm88tR9Il2";
+    let confirmationResult, userBalance = 0, currentGlobalComm = 1.25, allSvcs = [], apiSettings = {};
 
-    let allSvcs = [], currentGlobalComm = 1.25, userBalance = 0;
-
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         document.getElementById('loadingScreen').classList.add('hidden');
-        if (user) {
+        if(user) {
+            document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appScreen').classList.remove('hidden');
-            const isAdmin = user.uid === ADMIN_UID;
+            document.getElementById('sideName').innerText = user.email || user.phoneNumber || "User";
             
-            // UI Switch based on Role
-            if(isAdmin) {
-                document.getElementById('adminPanel').classList.remove('hidden');
-                setupAdminMenu();
-                loadAdminData();
-            } else {
-                document.getElementById('userPanel').classList.remove('hidden');
-                setupUserMenu();
-            }
-
-            document.getElementById('sideName').innerText = user.displayName || user.email.split('@')[0];
-            document.getElementById('sideImg').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
+            const isAdmin = user.uid === ADMIN_UID;
+            isAdmin ? setupAdminUI() : setupUserUI();
 
             onValue(ref(db, 'users/' + user.uid), (s) => {
                 userBalance = s.val() ? s.val().balance : 0;
                 document.getElementById('headerBalance').innerText = "₹" + userBalance.toFixed(2);
+                if(!s.val()) set(ref(db, 'users/' + user.uid), { balance: 0, email: user.email || "none", phone: user.phoneNumber || "none" });
             });
-
-            onValue(ref(db, 'settings/commission'), (s) => { 
-                currentGlobalComm = s.val() || 1.25; 
-                if(!isAdmin) fetchServices();
-            });
-        } else { handleGoogle(); }
+            
+            onValue(ref(db, 'settings/api'), (s) => { apiSettings = s.val() || {}; fetchServices(); });
+            onValue(ref(db, 'settings/commission'), (s) => { currentGlobalComm = s.val() || 1.25; });
+        } else {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+        }
     });
 
-    // Sidebar & Bottom Nav Logic
-    function setupAdminMenu() {
+    // WORKABLE API & SUPPORT EDITOR
+    window.saveApiSettings = () => {
+        const url = document.getElementById('newApiUrl').value;
+        const key = document.getElementById('newApiKey').value;
+        set(ref(db, 'settings/api'), { url, key }).then(() => alert("API Updated!"));
+    };
+
+    window.saveSupportLinks = () => {
+        const telegram = document.getElementById('supTele').value;
+        const whatsapp = document.getElementById('supWa').value;
+        set(ref(db, 'settings/support'), { telegram, whatsapp }).then(() => alert("Support Updated!"));
+    };
+
+    // AUTH HANDLERS
+    window.handleGoogle = () => signInWithPopup(auth, provider);
+    window.handleEmailAuth = (type) => {
+        const e = document.getElementById('authEmail').value, p = document.getElementById('authPass').value;
+        type === 'login' ? signInWithEmailAndPassword(auth, e, p) : createUserWithEmailAndPassword(auth, e, p);
+    };
+    window.handlePhoneAuth = () => {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {size: 'invisible'});
+        signInWithPhoneNumber(auth, document.getElementById('phoneNumber').value, window.recaptchaVerifier)
+        .then(res => { confirmationResult = res; document.getElementById('otpSection').classList.remove('hidden'); });
+    };
+    window.verifyOtpCode = () => confirmationResult.confirm(document.getElementById('verificationCode').value);
+
+    // DYNAMIC UI SETUP
+    function setupAdminUI() {
         document.getElementById('sidebarMenu').innerHTML = `
-            <div onclick="switchTab('adminPanel')" class="sidebar-item text-red-400 font-bold"><i class="fas fa-user-shield"></i> Master Control</div>
-            <div onclick="switchTab('services')" class="sidebar-item"><i class="fas fa-server"></i> API Manager</div>
-            <div onclick="switchTab('support')" class="sidebar-item"><i class="fas fa-headset"></i> Support Editor</div>
+            <div onclick="switchTab('adminPanel')" class="sidebar-item text-red-400 font-bold"><i class="fas fa-shield-alt"></i> Admin Panel</div>
+            <div onclick="switchTab('apiManagerTab')" class="sidebar-item"><i class="fas fa-plug"></i> API Manager</div>
+            <div onclick="switchTab('supportTab')" class="sidebar-item"><i class="fas fa-headset"></i> Support Editor</div>
             <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Logout</div>
         `;
         document.getElementById('bottomNav').innerHTML = `
-            <button onclick="switchTab('adminPanel')" class="flex flex-col items-center nav-active"><i class="fas fa-shield-alt"></i><span class="text-[8px] mt-1">MASTER</span></button>
-            <button onclick="switchTab('services')" class="flex flex-col items-center text-slate-500"><i class="fas fa-cog"></i><span class="text-[8px] mt-1">SERVICES</span></button>
+            <button onclick="switchTab('adminPanel')" class="flex flex-col items-center"><i class="fas fa-user-shield"></i></button>
+            <button onclick="switchTab('apiManagerTab')" class="flex flex-col items-center"><i class="fas fa-cog"></i></button>
         `;
+        loadAdminData();
     }
 
-    function setupUserMenu() {
+    function setupUserUI() {
         document.getElementById('sidebarMenu').innerHTML = `
-            <div onclick="switchTab('home')" class="sidebar-item"><i class="fas fa-shopping-cart text-blue-400"></i> New Order</div>
-            <div onclick="switchTab('history')" class="sidebar-item"><i class="fas fa-list text-purple-400"></i> My Orders</div>
-            <div onclick="openAddMoney()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Deposit Funds</div>
+            <div onclick="switchTab('homeTab')" class="sidebar-item"><i class="fas fa-shopping-cart"></i> New Order</div>
+            <div onclick="switchTab('historyTab')" class="sidebar-item"><i class="fas fa-history"></i> My Orders</div>
             <div onclick="logoutUser()" class="sidebar-item text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Logout</div>
         `;
         document.getElementById('bottomNav').innerHTML = `
-            <button onclick="switchTab('home')" class="flex flex-col items-center nav-active"><i class="fas fa-home"></i><span class="text-[8px] mt-1">HOME</span></button>
-            <button onclick="switchTab('history')" class="flex flex-col items-center text-slate-500"><i class="fas fa-list"></i><span class="text-[8px] mt-1">ORDERS</span></button>
+            <button onclick="switchTab('homeTab')" class="flex flex-col items-center"><i class="fas fa-home"></i></button>
+            <button onclick="switchTab('historyTab')" class="flex flex-col items-center"><i class="fas fa-list"></i></button>
         `;
     }
 
-    // Place Order Logic (FIXED SERVER ERROR)
+    // FETCH & ORDER LOGIC
+    async function fetchServices() {
+        if(!apiSettings.url) return;
+        try {
+            const res = await fetch(`${apiSettings.url}/services`);
+            allSvcs = await res.json();
+            const cats = [...new Set(allSvcs.map(s => s.category))];
+            document.getElementById('catSelect').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            filterServices();
+        } catch(e) { console.error("API Error"); }
+    }
+
+    window.filterServices = () => {
+        const filtered = allSvcs.filter(s => s.category === document.getElementById('catSelect').value);
+        document.getElementById('serviceSelect').innerHTML = filtered.map(s => `<option value="${(s.rate * currentGlobalComm).toFixed(2)}" data-id="${s.service}">${s.name}</option>`).join('');
+        calcTotal();
+    };
+
+    window.calcTotal = () => {
+        const total = (parseFloat(document.getElementById('serviceSelect').value) / 1000) * (parseInt(document.getElementById('orderQty').value) || 0);
+        document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
+    };
+
     window.placeOrder = async () => {
-        const cost = (parseFloat(document.getElementById('serviceSelect').value) / 1000) * parseInt(document.getElementById('orderQty').value);
+        const cost = parseFloat(document.getElementById('autoPrice').innerText.replace('₹',''));
         if(userBalance < cost) return alert("Low Balance!");
-        
         document.getElementById('buyBtn').innerText = "Processing...";
         try {
-            const res = await fetch(`${BACKEND}/buy`, {
+            const res = await fetch(`${apiSettings.url}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    uid: auth.currentUser.uid,
-                    service: document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id'),
-                    link: document.getElementById('orderLink').value,
-                    quantity: document.getElementById('orderQty').value
-                })
+                body: JSON.stringify({ uid: auth.currentUser.uid, service: document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id'), link: document.getElementById('orderLink').value, quantity: document.getElementById('orderQty').value })
             });
             if(res.ok) {
-                await update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
+                update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
                 alert("Order Placed!");
-            } else { throw new Error(); }
-        } catch (e) { alert("Server Busy. Try after 10 sec."); }
+            } else { alert("Server Error. Try again."); }
+        } catch(e) { alert("Error connecting to server."); }
         document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
     };
 
-    // Admin Data Handlers
+    // ADMIN DATA HELPERS
     window.loadAdminData = () => {
-        onValue(ref(db, 'payment_requests'), (snap) => {
-            const list = document.getElementById('adminPayList'); list.innerHTML = "";
-            snap.forEach(child => {
-                const d = child.val();
-                list.innerHTML += `<div class="bg-blue-600/10 p-3 rounded-xl flex justify-between items-center text-[10px]">
-                    <div>₹${d.amount} • ${d.utr}</div>
-                    <div class="flex gap-1">
-                        <button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded">OK</button>
-                        <button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded">X</button>
-                    </div>
-                </div>`;
-            });
-        });
         onValue(ref(db, 'users'), (snap) => {
             const list = document.getElementById('userList'); list.innerHTML = "";
-            snap.forEach(child => {
-                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-500">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
+            snap.forEach(c => {
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${c.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${c.val().email}</span><span class="text-green-500">₹${(c.val().balance||0).toFixed(2)}</span></div>`;
             });
         });
     };
 
-    // Standard Handlers
-    window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await remove(ref(db, `payment_requests/${k}`)); alert("Approved!"); };
-    window.rejectPay = async (k) => { if(confirm("Reject?")) await remove(ref(db, `payment_requests/${k}`)); };
-    window.manualBalanceUpdate = async () => { await update(ref(db, `users/${document.getElementById('adminTargetUid').value}`), { balance: increment(parseFloat(document.getElementById('adminEditBalAmt').value)) }); alert("Updated!"); };
-    window.updateComm = async () => { await set(ref(db, 'settings/commission'), parseFloat(document.getElementById('newCommInput').value)); alert("Saved!"); };
-    window.logoutUser = () => signOut(auth).then(() => location.reload());
-    window.handleGoogle = () => signInWithPopup(auth, provider);
-    window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };
-    window.switchTab = (t) => {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        const target = document.getElementById(t + 'Tab') || document.getElementById(t);
-        if(target) target.classList.remove('hidden');
+    window.manualBalanceUpdate = () => {
+        const uid = document.getElementById('adminTargetUid').value, amt = parseFloat(document.getElementById('adminEditBalAmt').value);
+        update(ref(db, `users/${uid}`), { balance: increment(amt) }).then(() => alert("Updated!"));
     };
+
+    window.switchTab = (id) => {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        toggleSidebar();
+    };
+    window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };
+    window.logoutUser = () => signOut(auth).then(() => location.reload());
 </script>
 </body>
 </html>
