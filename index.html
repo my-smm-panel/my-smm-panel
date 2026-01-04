@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DG SERVICE - Master Control</title>
+    <title>DG SERVICE - Pro Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -125,9 +125,9 @@
     </main>
 
     <nav class="bg-slate-900 border-t border-white/5 h-16 fixed bottom-0 w-full flex justify-around items-center z-50">
-        <button onclick="switchTab('homeTab')" class="nav-item nav-active flex flex-col items-center"><i class="fas fa-home"></i></button>
-        <button onclick="switchTab('historyTab')" class="nav-item text-slate-500 flex flex-col items-center"><i class="fas fa-list"></i></button>
-        <button onclick="switchTab('profileTab')" class="nav-item text-slate-500 flex flex-col items-center"><i class="fas fa-user"></i></button>
+        <button onclick="switchTab('homeTab')" class="nav-item nav-active flex flex-col items-center w-full"><i class="fas fa-home"></i></button>
+        <button onclick="switchTab('historyTab')" class="nav-item text-slate-500 flex flex-col items-center w-full"><i class="fas fa-list"></i></button>
+        <button onclick="switchTab('profileTab')" class="nav-item text-slate-500 flex flex-col items-center w-full"><i class="fas fa-user"></i></button>
     </nav>
 </div>
 
@@ -144,7 +144,6 @@
         <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2">Support</p>
         <div onclick="window.open('https://t.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram</div>
         <div onclick="window.open('https://wa.me/917775965170')" class="sidebar-item"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</div>
-        <div onclick="window.open('https://www.instagram.com/dg.service.1')" class="sidebar-item"><i class="fab fa-instagram text-pink-500"></i> Instagram</div>
 
         <div id="adminSidebarBtn" class="hidden border-t border-white/10 mt-4 pt-4">
             <div onclick="switchTab('adminPanel'); toggleSidebar()" class="sidebar-item text-red-400 font-bold"><i class="fas fa-shield-alt"></i> MASTER ADMIN</div>
@@ -223,14 +222,12 @@
         }
     });
 
-    // MASTER ADMIN: UPDATE COMMISSION
     window.updateComm = async () => {
         const val = parseFloat(document.getElementById('newCommInput').value);
         if(!val) return alert("Enter Rate");
         set(ref(db, 'settings/commission'), val).then(() => alert("Commission Updated!"));
     };
 
-    // AUTH LOGIC
     window.handleGoogle = () => signInWithPopup(auth, provider);
     window.handleEmailAuth = (type) => {
         const e = document.getElementById('authEmail').value, p = document.getElementById('authPass').value;
@@ -243,13 +240,12 @@
     };
     window.verifyOtpCode = () => confirmationResult.confirm(document.getElementById('verificationCode').value);
 
-    // REST OF LOGIC (PROMO, API, ADMIN DATA)
     async function fetchServices() {
         try {
             const res = await fetch(`${BACKEND}/services`);
             allSvcs = await res.json();
-            const categories = [...new Set(allSvcs.map(item => item.category))];
-            document.getElementById('catSelect').innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            const cats = [...new Set(allSvcs.map(s => s.category))];
+            document.getElementById('catSelect').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
             filterServices();
         } catch (e) { console.error("API Connection Error"); }
     }
@@ -270,20 +266,41 @@
         document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
     };
 
+    // FIXED: Order Success logic updated
     window.placeOrder = async () => {
         const cost = parseFloat(document.getElementById('autoPrice').innerText.replace('₹',''));
+        const link = document.getElementById('orderLink').value;
+        const qty = document.getElementById('orderQty').value;
+        const serviceId = document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id');
+
+        if(!link || qty < 1) return alert("Fill details!");
         if(userBalance < cost) return alert("Low Balance!");
+
+        document.getElementById('buyBtn').innerText = "Processing...";
+        document.getElementById('buyBtn').disabled = true;
+
         try {
             const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: auth.currentUser.uid, service: document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id'), link: document.getElementById('orderLink').value, quantity: document.getElementById('orderQty').value })
+                body: JSON.stringify({ uid: auth.currentUser.uid, service: serviceId, link: link, quantity: qty })
             });
-            if(res.ok) {
-                update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
-                alert("Order Placed!");
+
+            if (res.ok) {
+                await update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
+                alert("Order Placed Successfully!");
+                document.getElementById('orderLink').value = "";
+                document.getElementById('orderQty').value = "";
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert("Server Error: " + (err.error || "Try again"));
             }
-        } catch(e) { alert("Server Busy"); }
+        } catch (e) {
+            alert("Connection Error. Please try again.");
+        } finally {
+            document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
+            document.getElementById('buyBtn').disabled = false;
+        }
     };
 
     window.redeemPromo = () => {
