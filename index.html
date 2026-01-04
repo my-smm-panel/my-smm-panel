@@ -94,7 +94,22 @@
             <div id="adminPanel" class="hidden space-y-4">
                 <div class="glass p-5 border-2 border-red-500/30">
                     <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center tracking-widest">Master Admin Dashboard</h3>
+                    <div class="mb-4 p-3 bg-white/5 rounded-xl border border-white/5 text-center">  
+                        <p class="text-[9px] opacity-50 mb-2 uppercase font-bold text-center">Global Commission: <span id="curCommText">...</span></p>
+                        <div class="flex gap-2">
+                            <input id="newCommInput" type="number" step="0.01" class="neo-input text-xs" placeholder="1.25">
+                            <button onclick="updateComm()" class="bg-blue-600 px-4 rounded-lg font-bold text-[10px]">SAVE</button>
+                        </div>
+                    </div>
                     <div id="adminPayList" class="space-y-2 mb-4"></div>
+                    <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 text-center">
+                        <p class="text-[10px] text-white font-bold mb-3 uppercase tracking-widest">Direct Inject Balance</p>
+                        <input id="adminTargetUid" type="text" placeholder="UID" class="w-full p-3 neo-input text-[10px] mb-2 outline-none">
+                        <div class="flex gap-2">
+                            <input id="adminEditBalAmt" type="number" placeholder="Amt" class="flex-1 p-3 neo-input text-[10px] outline-none">
+                            <button onclick="manualBalanceUpdate()" class="bg-green-600 px-4 rounded-xl font-black text-[10px] uppercase">Update</button>
+                        </div>
+                    </div>
                     <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
                 </div>
             </div>
@@ -110,6 +125,17 @@
         <button onclick="switchTab('home')" id="navHome" class="nav-item nav-active flex flex-col items-center w-full"><i class="fas fa-home text-lg"></i></button>
         <button onclick="switchTab('history')" id="navHistory" class="nav-item flex flex-col items-center w-full text-slate-500"><i class="fas fa-list text-lg"></i></button>
         <button onclick="switchTab('profile')" id="navProfile" class="nav-item flex flex-col items-center w-full text-slate-500"><i class="fas fa-user-shield text-lg"></i></button>
+    </div>
+</div>
+
+<div id="addMoneyModal" class="hidden fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-6 text-center">
+    <div class="glass p-8 w-full max-w-sm space-y-4">
+        <h2 class="text-xl font-black italic uppercase text-blue-500">Add Funds</h2>
+        <input id="payAmt" type="number" oninput="updateQR()" placeholder="Enter Amount" class="neo-input text-center font-bold">
+        <div id="qrContainer" class="hidden py-2"><img id="qrImg" src="" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl"></div>
+        <input id="utrCode" type="text" placeholder="12 Digit UTR" class="neo-input text-center font-bold">
+        <button onclick="submitUTR()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Verify</button>
+        <button onclick="document.getElementById('addMoneyModal').classList.add('hidden')" class="text-xs uppercase opacity-50">Close</button>
     </div>
 </div>
 
@@ -158,10 +184,10 @@
 
             onValue(ref(db, 'settings/commission'), (s) => { 
                 currentGlobalComm = s.val() || 1.25;
+                document.getElementById('curCommText').innerText = currentGlobalComm;
                 if(allSvcs.length > 0) filterServices();
             });
 
-            // Orders sync
             onValue(ref(db, 'orders/' + user.uid), (snap) => {
                 const list = document.getElementById('orderHistoryList');
                 list.innerHTML = "";
@@ -173,7 +199,6 @@
                     </div>`;
                 });
             });
-            
             fetchServices();
         } else { signInWithPopup(auth, provider); }
     });
@@ -206,60 +231,88 @@
         calcTotal();
     };
 
-    // FIXED PLACE ORDER LOGIC
     window.placeOrder = async () => {
         const cost = calcTotal();
         const link = document.getElementById('orderLink').value;
         const qty = document.getElementById('orderQty').value;
-        const serviceId = document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id');
-        const serviceName = document.getElementById('serviceSelect').selectedOptions[0].innerText;
+        const serviceSelect = document.getElementById('serviceSelect');
+        const serviceId = serviceSelect.selectedOptions[0].getAttribute('data-id');
+        const serviceName = serviceSelect.selectedOptions[0].innerText;
 
         if(!link || qty < 1) return alert("Fill all details!");
-        if(userBalance < cost) return alert("Low Balance! Please recharge.");
+        if(userBalance < cost) return alert("Low Balance!");
 
         document.getElementById('buyBtn').innerText = "Processing...";
         document.getElementById('buyBtn').disabled = true;
 
         try {
-            // Backend call
             const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    uid: auth.currentUser.uid,
-                    service: serviceId,
-                    link: link,
-                    quantity: qty
-                })
+                body: JSON.stringify({ uid: auth.currentUser.uid, service: serviceId, link: link, quantity: qty })
             });
 
             if(res.ok) {
-                // Deduct from Firebase
                 await update(ref(db, 'users/' + auth.currentUser.uid), { balance: increment(-cost) });
-                // Push to History
-                await push(ref(db, 'orders/' + auth.currentUser.uid), {
-                    serviceName, cost, quantity: qty, status: 'Pending', date: new Date().toLocaleString()
-                });
-                alert("Order Placed Successfully!");
-                switchTab('history');
-            } else { alert("Server Error. Try again."); }
-        } catch (e) { alert("Check Connection."); }
-        
+                await push(ref(db, 'orders/' + auth.currentUser.uid), { serviceName, cost, quantity: qty, status: 'Pending', date: new Date().toLocaleString() });
+                alert("Order Placed!"); switchTab('history');
+            } else { alert("Server Error. Check Backend!"); }
+        } catch (e) { alert("Server Down. Try later."); }
         document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
         document.getElementById('buyBtn').disabled = false;
+    };
+
+    window.loadAdminData = () => {
+        onValue(ref(db, 'payment_requests'), (snap) => {
+            const list = document.getElementById('adminPayList'); list.innerHTML = "";
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.status === 'Pending') {
+                    list.innerHTML += `<div class="bg-blue-600/10 p-3 rounded-xl flex justify-between items-center text-[10px] mb-2">
+                        <div>₹${d.amount}<br>${d.utr}</div>
+                        <div class="flex gap-1">
+                            <button onclick="approvePay('${child.key}','${d.userId}',${d.amount})" class="bg-green-600 px-3 py-1 rounded">OK</button>
+                            <button onclick="rejectPay('${child.key}')" class="bg-red-600 px-3 py-1 rounded">X</button>
+                        </div>
+                    </div>`;
+                }
+            });
+        });
+        onValue(ref(db, 'users'), (snap) => {
+            const list = document.getElementById('userList'); list.innerHTML = "";
+            snap.forEach(child => {
+                list.innerHTML += `<div onclick="document.getElementById('adminTargetUid').value='${child.key}'" class="p-2 border-b border-white/5 flex justify-between cursor-pointer"><span>${child.val().email}</span><span class="text-green-500">₹${(child.val().balance||0).toFixed(2)}</span></div>`;
+            });
+        });
+    };
+
+    window.approvePay = async (k, u, a) => { await update(ref(db, `users/${u}`), { balance: increment(a) }); await remove(ref(db, `payment_requests/${k}`)); alert("Approved"); };
+    window.rejectPay = async (k) => { if(confirm("Reject?")) await remove(ref(db, `payment_requests/${k}`)); alert("Rejected"); };
+    window.updateComm = async () => { await set(ref(db, 'settings/commission'), parseFloat(document.getElementById('newCommInput').value)); alert("Saved"); };
+    window.manualBalanceUpdate = async () => {
+        const uid = document.getElementById('adminTargetUid').value;
+        const amt = parseFloat(document.getElementById('adminEditBalAmt').value);
+        await update(ref(db, `users/${uid}`), { balance: increment(amt) }); alert("Updated");
+    };
+
+    window.updateQR = () => {
+        const amt = document.getElementById('payAmt').value;
+        if(amt > 0) {
+            document.getElementById('qrContainer').classList.remove('hidden');
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7775965170@naviaxis&pn=DG-SERVICE&am=${amt}&cu=INR`;
+        }
+    };
+
+    window.submitUTR = async () => {
+        const utr = document.getElementById('utrCode').value;
+        const amt = document.getElementById('payAmt').value;
+        if(utr.length < 10) return alert("Invalid UTR");
+        await push(ref(db, 'payment_requests'), { userId: auth.currentUser.uid, email: auth.currentUser.email, utr, amount: parseFloat(amt), status: 'Pending' });
+        alert("Sent!"); document.getElementById('addMoneyModal').classList.add('hidden');
     };
 
     window.switchTab = (t) => {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.getElementById(t + 'Tab').classList.remove('hidden');
         document.querySelectorAll('.nav-item').forEach(el => el.classList.replace('nav-active', 'text-slate-500'));
-        if(t === 'home') document.getElementById('navHome').classList.replace('text-slate-500', 'nav-active');
-        if(t === 'history') document.getElementById('navHistory').classList.replace('text-slate-500', 'nav-active');
-        if(t === 'profile') document.getElementById('navProfile').classList.replace('text-slate-500', 'nav-active');
-    };
-    window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); };
-    window.logoutUser = () => signOut(auth).then(() => location.reload());
-</script>
-</body>
-                        </html>
-                        
+        if(t === 'home') document.getElementById('navHome').classL
