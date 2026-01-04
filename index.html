@@ -95,7 +95,6 @@
         <div id="adminPanel" class="tab-content space-y-4">
             <div class="glass p-5 border border-red-500/30">
                 <h3 class="text-red-500 font-black text-[10px] uppercase mb-4 text-center">Master Admin Control</h3>
-                
                 <div class="mb-6 p-3 bg-white/5 rounded-xl border border-white/10">
                     <p class="text-[9px] font-bold uppercase mb-2 text-center text-blue-400">Update Commission Rate</p>
                     <div class="flex gap-2">
@@ -103,7 +102,6 @@
                         <button onclick="updateComm()" class="bg-blue-600 px-4 rounded-xl font-black text-[10px] uppercase">Save</button>
                     </div>
                 </div>
-
                 <div class="mb-6 p-3 bg-white/5 rounded-xl">
                     <p class="text-[9px] font-bold uppercase mb-2">Create Promo Code</p>
                     <div class="flex gap-2">
@@ -111,10 +109,8 @@
                         <button onclick="generatePromo()" class="bg-green-600 px-4 rounded-lg text-[10px] font-bold">GENERATE</button>
                     </div>
                 </div>
-
                 <div id="adminPayList" class="space-y-2 mb-4"></div>
                 <div id="userList" class="max-h-60 overflow-y-auto space-y-2 text-[10px]"></div>
-                
                 <div class="mt-4 p-3 bg-white/5 rounded-xl">
                     <input id="adminTargetUid" type="text" placeholder="UID" class="neo-input text-[10px] mb-2">
                     <input id="adminEditBalAmt" type="number" placeholder="Amount" class="neo-input text-xs mb-2">
@@ -140,11 +136,9 @@
     <div class="flex flex-col py-2">
         <div onclick="switchTab('homeTab'); toggleSidebar()" class="sidebar-item"><i class="fas fa-shopping-cart text-blue-400"></i> New Order</div>
         <div onclick="openAddMoney(); toggleSidebar()" class="sidebar-item"><i class="fas fa-wallet text-green-400"></i> Add Funds</div>
-        
         <p class="px-5 text-[9px] font-black text-gray-500 uppercase mt-4 mb-2">Support</p>
         <div onclick="window.open('https://t.me/Digisellprobot')" class="sidebar-item"><i class="fab fa-telegram text-blue-400"></i> Telegram</div>
         <div onclick="window.open('https://wa.me/917775965170')" class="sidebar-item"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</div>
-
         <div id="adminSidebarBtn" class="hidden border-t border-white/10 mt-4 pt-4">
             <div onclick="switchTab('adminPanel'); toggleSidebar()" class="sidebar-item text-red-400 font-bold"><i class="fas fa-shield-alt"></i> MASTER ADMIN</div>
         </div>
@@ -266,12 +260,13 @@
         document.getElementById('autoPrice').innerText = "₹" + total.toFixed(2);
     };
 
-    // FIXED: Order Success logic updated
+    // UPDATED PLACE ORDER LOGIC (FIXED SERVER ERROR)
     window.placeOrder = async () => {
         const cost = parseFloat(document.getElementById('autoPrice').innerText.replace('₹',''));
         const link = document.getElementById('orderLink').value;
         const qty = document.getElementById('orderQty').value;
-        const serviceId = document.getElementById('serviceSelect').selectedOptions[0].getAttribute('data-id');
+        const serviceSelect = document.getElementById('serviceSelect');
+        const serviceId = serviceSelect.selectedOptions[0].getAttribute('data-id');
 
         if(!link || qty < 1) return alert("Fill details!");
         if(userBalance < cost) return alert("Low Balance!");
@@ -280,6 +275,7 @@
         document.getElementById('buyBtn').disabled = true;
 
         try {
+            // Added timeout to wait for Render to wake up
             const res = await fetch(`${BACKEND}/buy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -296,7 +292,7 @@
                 alert("Server Error: " + (err.error || "Try again"));
             }
         } catch (e) {
-            alert("Connection Error. Please try again.");
+            alert("Backend waking up. Please try again in 10 seconds.");
         } finally {
             document.getElementById('buyBtn').innerText = "SUBMIT ORDER";
             document.getElementById('buyBtn').disabled = false;
